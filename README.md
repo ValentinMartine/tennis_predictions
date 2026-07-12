@@ -5,8 +5,13 @@ FiveThirtyEight), LightGBM sur variables sans fuite (classement, forme, activit�
 format, surface), blend réglé sur validation temporelle (2023), test tenu à l'écart (2024+).
 
 ## Données
-- tennis-data.co.uk : saisons ATP 2010-2026 (résultats, classements, cotes).
+- tennis-data.co.uk : saisons ATP 2000-2026, ~70 000 matchs (résultats, classements, cotes).
 - Sofascore : résultats live des Grands Chelems en cours (patch local, IP CI bloquées).
+
+## Historique Elo
+La passe chronologique capture les trajectoires Elo mensuelles par joueur, le top de
+chaque fin d'année, les pics de tous les temps et le palmarès des Grands Chelems
+(`data/tennis_elo_history.json` + sections dédiées de `tennis_predictions.json`).
 
 ## Usage
 ```bash
@@ -17,4 +22,6 @@ python scripts/train_and_backtest.py
 python -m src.export
 ```
 
-Sortie : `data/tennis_predictions.json`, consommé par valentinmartine.com/projets/tennis.
+Sorties : `data/tennis_predictions.json` (classement, saison complète de matchs, métriques,
+pics, n°1 par année, palmarès) et `data/tennis_elo_history.json` (trajectoires mensuelles),
+consommées par valentinmartine.com/projets/tennis.

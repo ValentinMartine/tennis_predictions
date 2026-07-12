@@ -20,9 +20,9 @@ from src.pipeline import FEATURES, build_features, load_matches, market_prob  # 
 
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "data" / "tennis_predictions.json"
-SITE = Path("C:/Users/valen/Documents/Projets/Projets_Informatiques/Perso/valentinmartine/public/data/tennis_predictions.json")
+OUT_HIST = ROOT / "data" / "tennis_elo_history.json"
+SITE_DIR = Path("C:/Users/valen/Documents/Projets/Projets_Informatiques/Perso/valentinmartine/public/data")
 TEST_START = np.datetime64("2024-01-01")
-N_RECENT = 150
 N_TOURNAMENTS = 4
 
 
@@ -159,9 +159,12 @@ def main() -> int:
     players.sort(key=lambda x: -x["elo"])
     players = players[:60]
 
-    # matchs récents (du plus récent au plus ancien)
+    # TOUS les matchs de la saison en cours (du plus récent au plus ancien)
+    season_start = np.datetime64(f"{allm['Date'].max().year}-01-01")
     recent_matches = []
     for i in range(len(metas) - 1, -1, -1):
+        if dates[i] < season_start:
+            break
         m = metas[i]
         pw = float(p_blend[i] if m["p1"] == m["winner"] else 1 - p_blend[i])
         q = market_prob(m["avgw"], m["avgl"])
@@ -177,8 +180,6 @@ def main() -> int:
             "score": m["score"],
             "retired": str(m.get("comment") or "") == "Retired",
         })
-        if len(recent_matches) >= N_RECENT:
-            break
 
     # ===== Historique Elo 2000-2026 =====
     history = state["history"]
@@ -195,18 +196,25 @@ def main() -> int:
     peaks.sort(key=lambda x: -x["elo"])
     peaks = peaks[:20]
 
-    # trajectoires mensuelles : légendes (top pics) + top 8 actuel
-    timeline_players = [p["player"] for p in peaks[:12]]
-    for p in players[:8]:
+    # trajectoires mensuelles (fichier dédié) : pics all-time + top 60 actuel + podiums
+    # de fin d'année -> l'utilisateur choisit librement les joueurs affichés.
+    timeline_players = [p["player"] for p in peaks]
+    for p in players:
         if p["player"] not in timeline_players:
             timeline_players.append(p["player"])
+    for tops in year_end.values():
+        for entry in tops[:3]:
+            if entry["player"] not in timeline_players:
+                timeline_players.append(entry["player"])
     elo_timeline = []
     for p in timeline_players:
         monthly: dict[str, float] = {}
         for d, e in history.get(p, []):
             monthly[f"{d.year}-{d.month:02d}"] = e  # dernière valeur du mois
         pts_series = sorted(monthly.items())
-        elo_timeline.append({"player": p, "points": pts_series})
+        if len(pts_series) >= 12:
+            elo_timeline.append({"player": p, "points": pts_series})
+    default_players = [p["player"] for p in peaks[:8]]
 
     year_end_list = [{"year": yy, "top": tops} for yy, tops in sorted(year_end.items())]
 
@@ -236,7 +244,7 @@ def main() -> int:
         "generated_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "method": "Elo global+surface (K type FiveThirtyEight) + LightGBM (classement, forme, "
                   "activité, H2H), blend réglé sur validation 2023, test 2024+",
-        "source": "tennis-data.co.uk (ATP, saisons 2010-2026)",
+        "source": "tennis-data.co.uk (ATP, saisons 2000-2026)",
         "n_matches": int(len(allm)),
         "last_match": str(allm["Date"].max().date()),
         "metrics": metrics,
@@ -244,14 +252,17 @@ def main() -> int:
         "recent_matches": recent_matches,
         "recent_tournaments": tournaments,
         "elo_peaks": peaks,
-        "elo_timeline": elo_timeline,
         "year_end": year_end_list,
         "slam_winners": slam_winners,
     }
     OUT.write_text(json.dumps(payload, ensure_ascii=False, indent=1), encoding="utf-8")
-    if SITE.parent.exists():
-        SITE.write_text(json.dumps(payload, ensure_ascii=False, indent=1), encoding="utf-8")
-    print(f"écrit {OUT.name} : {len(players)} joueurs, {len(recent_matches)} matchs récents")
+    hist_payload = {"default_players": default_players, "players": elo_timeline}
+    OUT_HIST.write_text(json.dumps(hist_payload, ensure_ascii=False), encoding="utf-8")
+    if SITE_DIR.exists():
+        (SITE_DIR / OUT.name).write_text(json.dumps(payload, ensure_ascii=False, indent=1), encoding="utf-8")
+        (SITE_DIR / OUT_HIST.name).write_text(json.dumps(hist_payload, ensure_ascii=False), encoding="utf-8")
+    print(f"écrit {OUT.name} : {len(players)} joueurs, {len(recent_matches)} matchs saison")
+    print(f"écrit {OUT_HIST.name} : {len(elo_timeline)} trajectoires")
     print("top 5 Elo :", ", ".join(f"{p['player']} ({p['elo']})" for p in players[:5]))
     return 0
 
