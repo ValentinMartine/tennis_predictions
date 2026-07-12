@@ -27,6 +27,110 @@ TEST_START = np.datetime64("2024-01-01")
 N_TOURNAMENTS = 4
 
 
+def _score_parts(match) -> list[tuple[int, int]]:
+    parts = []
+    for i in range(1, 6):
+        try:
+            w_games = int(float(match.get(f"W{i}")))
+            l_games = int(float(match.get(f"L{i}")))
+        except (TypeError, ValueError):
+            continue
+        parts.append((w_games, l_games))
+    return parts
+
+
+def _player_match_stats(allm):
+    stats: dict[str, dict] = {}
+
+    def entry(player: str) -> dict:
+        if player not in stats:
+            stats[player] = {
+                "player": player, "matches": 0, "wins": 0, "losses": 0,
+                "sets_for": 0, "sets_against": 0, "games_for": 0, "games_against": 0,
+                "tiebreak_wins": 0, "tiebreak_losses": 0,
+                "deciding_wins": 0, "deciding_losses": 0,
+                "straight_wins": 0, "grand_slam_matches": 0, "grand_slam_wins": 0,
+                "hard_matches": 0, "hard_wins": 0, "clay_matches": 0, "clay_wins": 0,
+                "grass_matches": 0, "grass_wins": 0,
+            }
+        return stats[player]
+
+    for _, match in allm.iterrows():
+        winner, loser = str(match["Winner"]).strip(), str(match["Loser"]).strip()
+        surface = str(match.get("Surface") or "Hard").strip().title()
+        series = str(match.get("Series") or "")
+        parts = _score_parts(match)
+        if not parts:
+            continue
+        try:
+            w_sets = int(float(match.get("Wsets", sum(1 for w, l in parts if w > l)) or 0))
+            l_sets = int(float(match.get("Lsets", sum(1 for w, l in parts if l > w)) or 0))
+            best_of = int(float(match.get("Best of", 3) or 3))
+        except (TypeError, ValueError):
+            w_sets = sum(1 for w, l in parts if w > l)
+            l_sets = sum(1 for w, l in parts if l > w)
+            best_of = 3
+
+        for player, won in ((winner, True), (loser, False)):
+            row = entry(player)
+            row["matches"] += 1
+            row["wins" if won else "losses"] += 1
+            row["sets_for"] += w_sets if won else l_sets
+            row["sets_against"] += l_sets if won else w_sets
+            row["games_for"] += sum(w for w, _ in parts) if won else sum(l for _, l in parts)
+            row["games_against"] += sum(l for _, l in parts) if won else sum(w for w, _ in parts)
+            surface_key = {"Hard": "hard", "Clay": "clay", "Grass": "grass"}.get(surface, "hard")
+            row[f"{surface_key}_matches"] += 1
+            if won:
+                row[f"{surface_key}_wins"] += 1
+            if series == "Grand Slam":
+                row["grand_slam_matches"] += 1
+                if won:
+                    row["grand_slam_wins"] += 1
+
+        total_sets = w_sets + l_sets
+        if total_sets == best_of:
+            entry(winner)["deciding_wins"] += 1
+            entry(loser)["deciding_losses"] += 1
+        if l_sets == 0:
+            entry(winner)["straight_wins"] += 1
+        for w_games, l_games in parts:
+            if (w_games, l_games) == (7, 6):
+                entry(winner)["tiebreak_wins"] += 1
+                entry(loser)["tiebreak_losses"] += 1
+            elif (w_games, l_games) == (6, 7):
+                entry(winner)["tiebreak_losses"] += 1
+                entry(loser)["tiebreak_wins"] += 1
+
+    def pct(num, den):
+        return round(num / den, 4) if den else None
+
+    out = []
+    for row in stats.values():
+        matches = row["matches"]
+        if matches < 30:
+            continue
+        tiebreaks = row["tiebreak_wins"] + row["tiebreak_losses"]
+        deciders = row["deciding_wins"] + row["deciding_losses"]
+        grand_slams = row["grand_slam_matches"]
+        sets = row["sets_for"] + row["sets_against"]
+        games = row["games_for"] + row["games_against"]
+        row.update({
+            "win_rate": pct(row["wins"], matches),
+            "set_win_rate": pct(row["sets_for"], sets),
+            "game_win_rate": pct(row["games_for"], games),
+            "tiebreak_win_rate": pct(row["tiebreak_wins"], tiebreaks),
+            "deciding_win_rate": pct(row["deciding_wins"], deciders),
+            "straight_win_rate": pct(row["straight_wins"], row["wins"]),
+            "grand_slam_win_rate": pct(row["grand_slam_wins"], grand_slams),
+        })
+        for surface in ("hard", "clay", "grass"):
+            row[f"{surface}_win_rate"] = pct(row[f"{surface}_wins"], row[f"{surface}_matches"])
+        out.append(row)
+    out.sort(key=lambda x: (-x["matches"], x["player"]))
+    return out
+
+
 def main() -> int:
     allm = load_matches()
     X, y, metas, state = build_features(allm)
@@ -285,6 +389,7 @@ def main() -> int:
         "last_match": str(allm["Date"].max().date()),
         "metrics": metrics,
         "elo_rankings": players,
+        "player_stats": _player_match_stats(allm),
         "recent_matches": recent_matches,
         "recent_tournaments": tournaments,
         "elo_peaks": peaks,

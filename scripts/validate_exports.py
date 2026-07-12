@@ -24,13 +24,14 @@ def _assert(condition: bool, message: str) -> None:
 def validate_predictions(data: dict) -> None:
     required = {
         "generated_at", "source", "n_matches", "last_match", "metrics",
-        "elo_rankings", "recent_matches", "elo_peaks", "year_end", "slam_winners",
+        "elo_rankings", "player_stats", "recent_matches", "elo_peaks", "year_end", "slam_winners",
     }
     missing = required - set(data)
     _assert(not missing, f"Missing prediction keys: {sorted(missing)}")
     date.fromisoformat(data["last_match"])
     _assert(data["n_matches"] >= 50_000, "Unexpectedly small match history")
     _assert(len(data["elo_rankings"]) >= 30, "Too few active Elo players")
+    _assert(len(data["player_stats"]) >= 300, "Too few player statistic profiles")
     _assert(len(data["recent_matches"]) >= 100, "Too few displayed season matches")
 
     metrics = data["metrics"]
@@ -47,6 +48,13 @@ def validate_predictions(data: dict) -> None:
 
     players = {p["player"] for p in data["elo_rankings"]}
     _assert(len(players) == len(data["elo_rankings"]), "Duplicate players in Elo ranking")
+    stat_players = {p["player"] for p in data["player_stats"]}
+    _assert(players.issubset(stat_players), "Active Elo players missing from player_stats")
+    for player in data["player_stats"]:
+        _assert(player["matches"] >= 30, f"Too few matches in player_stats for {player['player']}")
+        for key in ("win_rate", "set_win_rate", "game_win_rate"):
+            value = player.get(key)
+            _assert(value is None or 0.0 <= value <= 1.0, f"Invalid {key} for {player['player']}")
     for match in data["recent_matches"]:
         pair = {match["winner"], match["loser"]}
         _assert(match.get("predicted_player") in pair, f"Prediction outside match pair: {match}")
