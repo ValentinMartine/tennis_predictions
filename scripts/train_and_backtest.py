@@ -45,7 +45,7 @@ def main() -> int:
 
     # poids du blend réglé sur la validation
     best_w, best_ll = 0.5, 1e9
-    for w in np.arange(0.0, 1.01, 0.05):
+    for w in np.arange(0.0, 1.001, 0.01):
         ll = log_loss(y[va], np.clip(w * p_ml[va] + (1 - w) * p_elo[va], 1e-6, 1 - 1e-6))
         if ll < best_ll:
             best_w, best_ll = float(w), ll
