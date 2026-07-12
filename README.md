@@ -14,6 +14,11 @@ La stratégie de mise reste négative hors échantillon. Les seuils choisis sur 
 ## Données
 - tennis-data.co.uk : saisons ATP 2000-2026, ~70 000 matchs (résultats, classements, cotes).
 - Sofascore : résultats live des Grands Chelems en cours (patch local, IP CI bloquées).
+- Jeff Sackmann `tennis_atp` : source prévue pour les statistiques de service/retour
+  (aces, doubles fautes, points de service, balles de break). Le code sait les charger
+  depuis `data/sackmann/`, les transformer en features chronologiques sans fuite et
+  enrichir les profils joueur. Si le cache est absent, ces features restent neutres et
+  `sackmann_stats_active=false` dans l'export.
 
 ## Historique Elo
 La passe chronologique capture les trajectoires Elo mensuelles par joueur, le top de
@@ -24,6 +29,7 @@ chaque fin d'année, les pics de tous les temps et le palmarès des Grands Chele
 ```bash
 pip install -r requirements.txt
 python scripts/download_data.py
+python scripts/download_sackmann_stats.py        # optionnel : stats service/retour si la source est accessible
 python scripts/patch_results_from_sofascore.py   # local uniquement
 python scripts/train_and_backtest.py
 python -m src.export

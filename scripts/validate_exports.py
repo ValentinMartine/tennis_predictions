@@ -23,7 +23,7 @@ def _assert(condition: bool, message: str) -> None:
 
 def validate_predictions(data: dict) -> None:
     required = {
-        "generated_at", "source", "n_matches", "last_match", "metrics",
+        "generated_at", "source", "sackmann_stats_active", "n_matches", "last_match", "metrics",
         "elo_rankings", "player_stats", "recent_matches", "elo_peaks", "year_end", "slam_winners",
     }
     missing = required - set(data)
@@ -55,6 +55,16 @@ def validate_predictions(data: dict) -> None:
         for key in ("win_rate", "set_win_rate", "game_win_rate"):
             value = player.get(key)
             _assert(value is None or 0.0 <= value <= 1.0, f"Invalid {key} for {player['player']}")
+        for key in (
+            "ace_rate", "double_fault_rate", "first_in_rate", "first_serve_won_rate",
+            "second_serve_won_rate", "service_points_won_rate", "break_points_saved_rate",
+            "return_points_won_rate", "break_points_converted_rate",
+        ):
+            value = player.get(key)
+            _assert(value is None or 0.0 <= value <= 1.0, f"Invalid {key} for {player['player']}")
+        for key in ("serve_elo", "return_elo", "pressure_elo", "stat_elo"):
+            value = player.get(key)
+            _assert(value is None or 1000 <= value <= 2200, f"Invalid {key} for {player['player']}")
     for match in data["recent_matches"]:
         pair = {match["winner"], match["loser"]}
         _assert(match.get("predicted_player") in pair, f"Prediction outside match pair: {match}")

@@ -17,6 +17,7 @@ from sklearn.metrics import log_loss
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from src.elo import SURFACES  # noqa: E402
 from src.pipeline import FEATURES, build_features, load_matches, market_prob  # noqa: E402
+from src.sackmann_stats import aggregate_player_stats, load_match_stats  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "data" / "tennis_predictions.json"
@@ -129,6 +130,19 @@ def _player_match_stats(allm):
         out.append(row)
     out.sort(key=lambda x: (-x["matches"], x["player"]))
     return out
+
+
+def _enrich_with_sackmann_stats(base_stats: list[dict], allm) -> list[dict]:
+    all_players = set(allm["Winner"].astype(str).str.strip()) | set(allm["Loser"].astype(str).str.strip())
+    sackmann_matches = load_match_stats(existing_players=all_players)
+    sackmann_stats = aggregate_player_stats(sackmann_matches)
+    if not sackmann_stats:
+        return base_stats
+    enriched = []
+    for row in base_stats:
+        extra = sackmann_stats.get(row["player"])
+        enriched.append({**row, **extra} if extra else row)
+    return enriched
 
 
 def main() -> int:
@@ -380,16 +394,21 @@ def main() -> int:
                             "series": ms[0]["series"], "n": len(ms),
                             "last_date": ms[0]["date"]})
 
+    player_stats = _enrich_with_sackmann_stats(_player_match_stats(allm), allm)
+    has_sackmann_stats = any("stat_elo" in row for row in player_stats)
+
     payload = {
         "generated_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "method": "Elo global+surface (K type FiveThirtyEight) + LightGBM (classement, forme, "
                   "activité, H2H), blend réglé sur validation 2023, test 2024+",
-        "source": "tennis-data.co.uk (ATP, saisons 2000-2026)",
+        "source": "tennis-data.co.uk (ATP, saisons 2000-2026)"
+                  + (" + Jeff Sackmann tennis_atp (statistiques de service/retour)" if has_sackmann_stats else ""),
+        "sackmann_stats_active": has_sackmann_stats,
         "n_matches": int(len(allm)),
         "last_match": str(allm["Date"].max().date()),
         "metrics": metrics,
         "elo_rankings": players,
-        "player_stats": _player_match_stats(allm),
+        "player_stats": player_stats,
         "recent_matches": recent_matches,
         "recent_tournaments": tournaments,
         "elo_peaks": peaks,

@@ -21,6 +21,7 @@ import numpy as np
 import pandas as pd
 
 from .elo import TennisElo, norm_surface
+from .sackmann_stats import STAT_FEATURES, RollingSackmannStats
 
 ROOT = Path(__file__).resolve().parents[1]
 DATA = ROOT / "data"
@@ -28,7 +29,7 @@ DATA = ROOT / "data"
 FEATURES = [
     "p_elo", "d_selo", "d_lrank", "d_lpts", "d_form10", "d_form25",
     "d_activity", "h2h", "h2h_count", "h2h_surface", "h2h_slam",
-    "h2h_recent", "best_of", "s_hard", "s_clay", "s_grass",
+    "h2h_recent", *STAT_FEATURES, "best_of", "s_hard", "s_clay", "s_grass",
 ]
 
 
@@ -104,6 +105,8 @@ def _score_workload(m) -> tuple[int, int]:
 def build_features(allm: pd.DataFrame):
     """Parcourt les matchs en ordre chronologique et produit X, y, meta (+ état final)."""
     elo = TennisElo()
+    all_players = set(allm["Winner"].astype(str).str.strip()) | set(allm["Loser"].astype(str).str.strip())
+    sackmann = RollingSackmannStats.from_cache(existing_players=all_players)
     recent: dict[str, deque] = defaultdict(lambda: deque(maxlen=25))
     last_dates: dict[str, deque] = defaultdict(lambda: deque(maxlen=40))
     h2h: dict[tuple, list] = defaultdict(lambda: [0, 0])
@@ -178,6 +181,7 @@ def build_features(allm: pd.DataFrame):
         p2_t_sets, p2_t_games = tournament_load[event_key][p2]
         p1_r_sets, p1_r_games = load_since(p1, 14)
         p2_r_sets, p2_r_games = load_since(p2, 14)
+        sackmann.advance_before(date)
 
         feats = {
             "p_elo": elo.prob(p1, p2, surface),
@@ -192,6 +196,7 @@ def build_features(allm: pd.DataFrame):
             "h2h_surface": h2h_surface_p1,
             "h2h_slam": h2h_slam_p1,
             "h2h_recent": h2h_recent_p1,
+            **sackmann.diff_features(p1, p2),
             "d_tourn_sets": (p1_t_sets - p2_t_sets) / 10.0,
             "d_tourn_games": (p1_t_games - p2_t_games) / 100.0,
             "d_recent_sets": (p1_r_sets - p2_r_sets) / 20.0,
