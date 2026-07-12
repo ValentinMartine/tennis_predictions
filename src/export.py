@@ -213,6 +213,8 @@ def main() -> int:
             if entry["player"] not in timeline_players:
                 timeline_players.append(entry["player"])
     elo_timeline = []
+    ranking_timeline = []
+    months = set()
     for p in timeline_players:
         monthly: dict[str, float] = {}
         for d, e in history.get(p, []):
@@ -220,6 +222,17 @@ def main() -> int:
         pts_series = sorted(monthly.items())
         if len(pts_series) >= 12:
             elo_timeline.append({"player": p, "points": pts_series})
+    for p, hist in history.items():
+        if len(hist) < 30:
+            continue
+        monthly: dict[str, float] = {}
+        for d, e in hist:
+            ym = f"{d.year}-{d.month:02d}"
+            monthly[ym] = e
+            months.add(ym)
+        pts_series = sorted(monthly.items())
+        if len(pts_series) >= 2:
+            ranking_timeline.append({"player": p, "points": pts_series, "matches": len(hist)})
     default_players = [p["player"] for p in peaks[:8]]
 
     year_end_list = [{"year": yy, "top": tops} for yy, tops in sorted(year_end.items())]
@@ -262,7 +275,12 @@ def main() -> int:
         "slam_winners": slam_winners,
     }
     OUT.write_text(json.dumps(payload, ensure_ascii=False, indent=1), encoding="utf-8")
-    hist_payload = {"default_players": default_players, "players": elo_timeline}
+    hist_payload = {
+        "default_players": default_players,
+        "players": elo_timeline,
+        "ranking_players": ranking_timeline,
+        "months": sorted(months),
+    }
     OUT_HIST.write_text(json.dumps(hist_payload, ensure_ascii=False), encoding="utf-8")
     if SITE_DIR.exists():
         (SITE_DIR / OUT.name).write_text(json.dumps(payload, ensure_ascii=False, indent=1), encoding="utf-8")
