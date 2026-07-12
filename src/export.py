@@ -72,6 +72,62 @@ def main() -> int:
             by_surface[s] = {"n": len(idx), "accuracy": round(float(((pp > 0.5) == (yy == 1)).mean()), 4)}
     metrics["by_surface"] = by_surface
 
+    # précision par niveau de tournoi et par tour (test)
+    def _acc_group(key_fn):
+        groups: dict[str, list] = {}
+        for i in range(len(metas)):
+            if te[i]:
+                groups.setdefault(key_fn(metas[i]), []).append(i)
+        out = {}
+        for g, idx in groups.items():
+            if len(idx) >= 50:
+                pp, yy = p_blend[idx], y[idx]
+                out[g] = {"n": len(idx), "accuracy": round(float(((pp > 0.5) == (yy == 1)).mean()), 4)}
+        return out
+
+    metrics["by_series"] = _acc_group(lambda m: str(m["series"]))
+    round_map = {"The Final": "Finale", "Semifinals": "Demi-finales", "Quarterfinals": "Quarts"}
+    metrics["by_round"] = _acc_group(lambda m: round_map.get(str(m["round"]), "Tours précédents"))
+
+    # backtest de mise sur le test : mise à valeur espérée positive (cotes moyennes)
+    def _backtest(edge_min=0.05):
+        stakes = returns = kelly_bank = 0.0
+        kelly_hist = 1.0
+        n_bets = wins = 0
+        for i in range(len(metas)):
+            if not te[i]:
+                continue
+            mm = metas[i]
+            try:
+                ow, ol = float(mm["avgw"]), float(mm["avgl"])
+            except (TypeError, ValueError):
+                continue
+            if not (ow > 1 and ol > 1) or ow != ow or ol != ol:
+                continue
+            pw = float(p_blend[i] if mm["p1"] == mm["winner"] else 1 - p_blend[i])
+            # deux côtés possibles : vainqueur réel (cote ow, proba modèle pw) ou perdant
+            cands = [(pw, ow, True), (1 - pw, ol, False)]
+            best = max(cands, key=lambda c: c[0] * c[1])
+            ev = best[0] * best[1] - 1
+            if ev < edge_min:
+                continue
+            n_bets += 1
+            stakes += 1.0
+            hit = best[2]
+            if hit:
+                wins += 1
+                returns += best[1]
+            # quart de Kelly (borné à 10 % de la banque)
+            b = best[1] - 1
+            f = max(0.0, min(0.1, 0.25 * (best[0] * b - (1 - best[0])) / b))
+            kelly_hist *= (1 + f * b) if hit else (1 - f)
+        roi = (returns - stakes) / stakes if stakes else 0.0
+        return {"n_bets": n_bets, "win_rate": round(wins / n_bets, 3) if n_bets else None,
+                "roi_flat": round(roi, 4), "kelly_final_bank": round(kelly_hist, 3),
+                "edge_min": edge_min}
+
+    metrics["betting"] = _backtest()
+
     # classement Elo des joueurs actifs (>= 1 match sur 6 mois, >= 30 matchs au total)
     elo, recent = state["elo"], state["recent"]
     last_dates, rank, pts = state["last_dates"], state["rank"], state["pts"]
@@ -124,6 +180,46 @@ def main() -> int:
         if len(recent_matches) >= N_RECENT:
             break
 
+    # ===== Historique Elo 2000-2026 =====
+    history = state["history"]
+    year_end = state["year_end"]
+    slam_finals = state["slam_finals"]
+
+    # pics Elo de tous les temps (carrière >= 150 matchs pour éviter les artefacts)
+    peaks = []
+    for p, hist in history.items():
+        if len(hist) < 150:
+            continue
+        d, e = max(hist, key=lambda t: t[1])
+        peaks.append({"player": p, "elo": e, "date": str(d.date())})
+    peaks.sort(key=lambda x: -x["elo"])
+    peaks = peaks[:20]
+
+    # trajectoires mensuelles : légendes (top pics) + top 8 actuel
+    timeline_players = [p["player"] for p in peaks[:12]]
+    for p in players[:8]:
+        if p["player"] not in timeline_players:
+            timeline_players.append(p["player"])
+    elo_timeline = []
+    for p in timeline_players:
+        monthly: dict[str, float] = {}
+        for d, e in history.get(p, []):
+            monthly[f"{d.year}-{d.month:02d}"] = e  # dernière valeur du mois
+        pts_series = sorted(monthly.items())
+        elo_timeline.append({"player": p, "points": pts_series})
+
+    year_end_list = [{"year": yy, "top": tops} for yy, tops in sorted(year_end.items())]
+
+    # palmarès des Grands Chelems par année
+    slam_order = ["Australian Open", "French Open", "Roland Garros", "Wimbledon", "US Open"]
+    slams_by_year: dict[int, dict] = {}
+    for f in slam_finals:
+        name = f["tournament"]
+        key = "Roland Garros" if name in ("French Open", "Roland Garros") else name
+        slams_by_year.setdefault(f["year"], {})[key] = {"winner": f["winner"], "loser": f["loser"], "score": f["score"]}
+    slam_winners = [{"year": yy, **{k: v for k, v in d.items()}} for yy, d in sorted(slams_by_year.items())]
+    _ = slam_order  # ordre géré côté site
+
     # tournois récents groupés
     seen, tournaments = [], []
     for rm in recent_matches:
@@ -147,6 +243,10 @@ def main() -> int:
         "elo_rankings": players,
         "recent_matches": recent_matches,
         "recent_tournaments": tournaments,
+        "elo_peaks": peaks,
+        "elo_timeline": elo_timeline,
+        "year_end": year_end_list,
+        "slam_winners": slam_winners,
     }
     OUT.write_text(json.dumps(payload, ensure_ascii=False, indent=1), encoding="utf-8")
     if SITE.parent.exists():

@@ -67,16 +67,35 @@ def build_features(allm: pd.DataFrame):
     h2h: dict[tuple, list] = defaultdict(lambda: [0, 0])
     rank: dict[str, float] = {}
     pts: dict[str, float] = {}
+    # Historique Elo « en direct » : trajectoire (date, elo) par joueur, top de fin d'année,
+    # finales de Grands Chelems (palmarès).
+    history: dict[str, list] = defaultdict(list)
+    year_end: dict[int, list] = {}
+    slam_finals: list[dict] = []
+    cur_year = None
+
+    def _snapshot_top(n=5):
+        act = [(p, r) for p, r in elo.rating.items() if elo.count[p] >= 15]
+        act.sort(key=lambda t: -t[1])
+        return [{"player": p, "elo": round(r, 1)} for p, r in act[:n]]
 
     rows, ys, metas = [], [], []
     for _, m in allm.iterrows():
         w, l = str(m["Winner"]).strip(), str(m["Loser"]).strip()
         surface = norm_surface(m.get("Surface"))
         date = m["Date"]
-        wr = float(m["WRank"]) if pd.notna(m.get("WRank")) else 250.0
-        lr = float(m["LRank"]) if pd.notna(m.get("LRank")) else 250.0
-        wp = float(m["WPts"]) if pd.notna(m.get("WPts")) else 10.0
-        lp = float(m["LPts"]) if pd.notna(m.get("LPts")) else 10.0
+
+        def _num(v, default):
+            try:
+                f = float(v)
+                return f if f == f and f > 0 else default  # NaN / 0 -> défaut
+            except (TypeError, ValueError):  # 'NR' (non classé) dans les vieilles saisons
+                return default
+
+        wr = _num(m.get("WRank"), 250.0)
+        lr = _num(m.get("LRank"), 250.0)
+        wp = _num(m.get("WPts"), 10.0)
+        lp = _num(m.get("LPts"), 10.0)
 
         p1_win = _p1_is_winner(date, w, l)
         p1, p2 = (w, l) if p1_win else (l, w)
@@ -122,7 +141,17 @@ def build_features(allm: pd.DataFrame):
         })
 
         # mises à jour post-match
+        if cur_year is None:
+            cur_year = date.year
+        elif date.year > cur_year:
+            year_end[cur_year] = _snapshot_top()
+            cur_year = date.year
         elo.update(w, l, surface, m.get("Series"))
+        history[w].append((date, round(elo.rating[w], 1)))
+        history[l].append((date, round(elo.rating[l], 1)))
+        if str(m.get("Series")) == "Grand Slam" and str(m.get("Round")) == "The Final":
+            slam_finals.append({"year": date.year, "tournament": str(m.get("Tournament")),
+                                "winner": w, "loser": l, "score": _score_str(m)})
         recent[w].append(1)
         recent[l].append(0)
         last_dates[w].append(date)
@@ -131,9 +160,13 @@ def build_features(allm: pd.DataFrame):
         rank[w], rank[l] = wr, lr
         pts[w], pts[l] = wp, lp
 
+    if cur_year is not None:
+        year_end[cur_year] = _snapshot_top()  # année en cours = état actuel
+
     X = pd.DataFrame(rows)[FEATURES]
     y = np.array(ys)
-    state = {"elo": elo, "recent": recent, "rank": rank, "pts": pts, "last_dates": last_dates}
+    state = {"elo": elo, "recent": recent, "rank": rank, "pts": pts, "last_dates": last_dates,
+             "history": history, "year_end": year_end, "slam_finals": slam_finals}
     return X, y, metas, state
 
 
@@ -141,9 +174,10 @@ def _score_str(m) -> str | None:
     parts = []
     for i in range(1, 6):
         w, l = m.get(f"W{i}"), m.get(f"L{i}")
-        if pd.isna(w) or pd.isna(l):
+        try:
+            parts.append(f"{int(float(w))}-{int(float(l))}")
+        except (TypeError, ValueError):  # NaN / ' ' dans les vieilles saisons
             break
-        parts.append(f"{int(w)}-{int(l)}")
     return " ".join(parts) or None
 
 

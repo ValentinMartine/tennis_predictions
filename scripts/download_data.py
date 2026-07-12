@@ -12,7 +12,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 DATA = ROOT / "data"
-FIRST_SEASON = 2010
+FIRST_SEASON = 2000
 URL = "http://www.tennis-data.co.uk/{y}/{y}.xlsx"
 
 
