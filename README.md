@@ -7,7 +7,9 @@ format, surface), blend réglé sur validation temporelle (2023), test tenu à l
 ## Features H2H
 Les confrontations directes sont enrichies : volume H2H, H2H par surface, H2H en Grand Chelem et H2H récent. Les charges en sets/jeux dans le tournoi et sur 14 jours ont été testées mais laissées hors `FEATURES`, car elles dégradaient la log-loss hors échantillon.
 
-Dernier backtest après ajout H2H fin : blend ML+Elo `accuracy=0,6468`, `log-loss=0,6210` sur 6 905 matchs test (2024+). Cela améliore légèrement le choix du vainqueur par rapport à l'ancien export (`0,6459`) mais dégrade très légèrement la calibration (`0,6205` -> `0,6210`).
+Dernier backtest après régularisation LightGBM : blend ML+Elo `accuracy=0,6474`, `log-loss=0,6202` sur 6 905 matchs test (2024+). Cela améliore à la fois l'ancien export (`accuracy=0,6468`, `log-loss=0,6210`) et la baseline Elo (`accuracy=0,6404`, `log-loss=0,6316`).
+
+La stratégie de mise reste négative hors échantillon. Les seuils choisis sur 2023 (`edge >= 20 %`, `confiance >= 70 %`) donnent `ROI=-1,88 %` sur 173 paris en test 2024+. Le modèle progresse, mais ne bat pas encore les cotes moyennes du marché.
 
 ## Données
 - tennis-data.co.uk : saisons ATP 2000-2026, ~70 000 matchs (résultats, classements, cotes).

@@ -38,6 +38,12 @@ def validate_predictions(data: dict) -> None:
         block = metrics.get(key) or {}
         _assert(0.0 <= block.get("accuracy", -1) <= 1.0, f"Invalid {key} accuracy")
         _assert(block.get("log_loss", 99) > 0, f"Invalid {key} log-loss")
+    betting = metrics.get("betting") or {}
+    for key in ("n_bets", "roi_flat", "edge_min", "conf_min", "validation_n_bets", "validation_roi_flat"):
+        _assert(key in betting, f"Missing betting key: {key}")
+    _assert(betting["n_bets"] >= 0, "Invalid betting count")
+    _assert(0.0 <= betting["edge_min"] <= 1.0, "Invalid betting edge threshold")
+    _assert(0.5 <= betting["conf_min"] <= 1.0, "Invalid betting confidence threshold")
 
     players = {p["player"] for p in data["elo_rankings"]}
     _assert(len(players) == len(data["elo_rankings"]), "Duplicate players in Elo ranking")

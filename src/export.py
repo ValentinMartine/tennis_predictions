@@ -22,6 +22,7 @@ ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "data" / "tennis_predictions.json"
 OUT_HIST = ROOT / "data" / "tennis_elo_history.json"
 SITE_DIR = Path("C:/Users/valen/Documents/Projets/Projets_Informatiques/Perso/valentinmartine/public/data")
+VAL_START = np.datetime64("2023-01-01")
 TEST_START = np.datetime64("2024-01-01")
 N_TOURNAMENTS = 4
 
@@ -35,6 +36,7 @@ def main() -> int:
     p_blend = w * p_ml + (1 - w) * X["p_elo"].to_numpy()
 
     dates = np.array([m["date"] for m in metas], dtype="datetime64[ns]")
+    va = (dates >= VAL_START) & (dates < TEST_START)
     te = dates >= TEST_START
 
     def block(p):
@@ -90,12 +92,12 @@ def main() -> int:
     metrics["by_round"] = _acc_group(lambda m: round_map.get(str(m["round"]), "Tours précédents"))
 
     # backtest de mise sur le test : mise à valeur espérée positive (cotes moyennes)
-    def _backtest(edge_min=0.05):
+    def _backtest(mask, edge_min=0.05, conf_min=0.5):
         stakes = returns = kelly_bank = 0.0
         kelly_hist = 1.0
         n_bets = wins = 0
         for i in range(len(metas)):
-            if not te[i]:
+            if not mask[i]:
                 continue
             mm = metas[i]
             try:
@@ -109,7 +111,7 @@ def main() -> int:
             cands = [(pw, ow, True), (1 - pw, ol, False)]
             best = max(cands, key=lambda c: c[0] * c[1])
             ev = best[0] * best[1] - 1
-            if ev < edge_min:
+            if ev < edge_min or best[0] < conf_min:
                 continue
             n_bets += 1
             stakes += 1.0
@@ -124,9 +126,24 @@ def main() -> int:
         roi = (returns - stakes) / stakes if stakes else 0.0
         return {"n_bets": n_bets, "win_rate": round(wins / n_bets, 3) if n_bets else None,
                 "roi_flat": round(roi, 4), "kelly_final_bank": round(kelly_hist, 3),
-                "edge_min": edge_min}
+                "edge_min": edge_min, "conf_min": conf_min}
 
-    metrics["betting"] = _backtest()
+    def _select_betting_threshold():
+        best = None
+        for edge_min in (0.00, 0.03, 0.05, 0.08, 0.10, 0.15, 0.20):
+            for conf_min in (0.50, 0.55, 0.60, 0.65, 0.70, 0.75):
+                stats = _backtest(va, edge_min, conf_min)
+                if stats["n_bets"] < 30:
+                    continue
+                if best is None or stats["roi_flat"] > best["roi_flat"]:
+                    best = stats
+        return best or _backtest(va)
+
+    validation_betting = _select_betting_threshold()
+    test_betting = _backtest(te, validation_betting["edge_min"], validation_betting["conf_min"])
+    test_betting["validation_n_bets"] = validation_betting["n_bets"]
+    test_betting["validation_roi_flat"] = validation_betting["roi_flat"]
+    metrics["betting"] = test_betting
 
     # classement Elo des joueurs actifs (>= 1 match sur 6 mois, >= 30 matchs au total)
     elo, recent = state["elo"], state["recent"]

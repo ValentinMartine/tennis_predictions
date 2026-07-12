@@ -36,8 +36,9 @@ def main() -> int:
     va = (dates >= np.datetime64(VAL_START)) & (dates < np.datetime64(TEST_START))
     te = dates >= np.datetime64(TEST_START)
 
-    model = LGBMClassifier(n_estimators=500, learning_rate=0.03, num_leaves=31,
-                           subsample=0.8, colsample_bytree=0.8, min_child_samples=40,
+    model = LGBMClassifier(n_estimators=900, learning_rate=0.02, num_leaves=15,
+                           subsample=0.75, colsample_bytree=0.75, min_child_samples=80,
+                           reg_alpha=0.15, reg_lambda=1.0,
                            random_state=42, verbose=-1)
     model.fit(X[tr], y[tr])
     p_ml = model.predict_proba(X)[:, 1]
