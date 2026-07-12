@@ -166,7 +166,10 @@ def main() -> int:
         if dates[i] < season_start:
             break
         m = metas[i]
-        pw = float(p_blend[i] if m["p1"] == m["winner"] else 1 - p_blend[i])
+        p1_prob = float(p_blend[i])
+        predicted_player = m["p1"] if p1_prob >= 0.5 else m["p2"]
+        predicted_prob = p1_prob if predicted_player == m["p1"] else 1 - p1_prob
+        pw = float(p1_prob if m["p1"] == m["winner"] else 1 - p1_prob)
         q = market_prob(m["avgw"], m["avgl"])
         recent_matches.append({
             "date": str(np.datetime_as_string(dates[i], unit="D")),
@@ -176,6 +179,9 @@ def main() -> int:
             "wrank": int(m["wrank"]) if m["wrank"] else None,
             "lrank": int(m["lrank"]) if m["lrank"] else None,
             "p_win": round(pw, 3),
+            "predicted_player": predicted_player,
+            "predicted_prob": round(float(predicted_prob), 3),
+            "model_correct": predicted_player == m["winner"],
             "market_p_win": round(float(q), 3) if q is not None else None,
             "score": m["score"],
             "retired": str(m.get("comment") or "") == "Retired",
