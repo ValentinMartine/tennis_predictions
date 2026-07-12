@@ -1,0 +1,8 @@
+lightgbm
+numpy
+pandas
+scikit-learn
+openpyxl
+requests
+xlrd
+joblib
