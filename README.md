@@ -25,8 +25,11 @@ python scripts/download_data.py
 python scripts/patch_results_from_sofascore.py   # local uniquement
 python scripts/train_and_backtest.py
 python -m src.export
+python scripts/validate_exports.py
 ```
 
 Sorties : `data/tennis_predictions.json` (classement, saison complète de matchs, métriques,
 pics, n°1 par année, palmarès) et `data/tennis_elo_history.json` (trajectoires mensuelles),
 consommées par valentinmartine.com/projets/tennis.
+
+Le workflow GitHub Actions exécute aussi `validate_exports.py` et commit les deux exports JSON.
