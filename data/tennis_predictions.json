@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-08-03T10:05:18+00:00",
+ "generated_at": "2026-08-04T08:54:08+00:00",
  "method": "Elo global+surface (K type FiveThirtyEight) + LightGBM (classement, forme, activité, H2H), blend réglé sur validation 2023, test 2024+",
  "source": "tennis-data.co.uk (ATP, saisons 2000-2026)",
  "sackmann_stats_active": false,
@@ -8,19 +8,19 @@
  "metrics": {
   "n_test": 7097,
   "elo": {
-   "accuracy": 0.64,
+   "accuracy": 0.6401,
    "log_loss": 0.6324
   },
   "ml": {
-   "accuracy": 0.6448,
-   "log_loss": 0.6205
+   "accuracy": 0.6449,
+   "log_loss": 0.6204
   },
   "blend": {
-   "accuracy": 0.6448,
-   "log_loss": 0.6205
+   "accuracy": 0.6449,
+   "log_loss": 0.6204
   },
   "market": {
-   "accuracy": 0.6808,
+   "accuracy": 0.6809,
    "log_loss": 0.592,
    "n": 7074
   },
@@ -28,7 +28,7 @@
   "by_surface": {
    "Hard": {
     "n": 3767,
-    "accuracy": 0.6501
+    "accuracy": 0.6504
    },
    "Clay": {
     "n": 2399,
@@ -50,7 +50,7 @@
    },
    "ATP500": {
     "n": 1279,
-    "accuracy": 0.6544
+    "accuracy": 0.6552
    },
    "Masters 1000": {
     "n": 1892,
@@ -72,7 +72,7 @@
    },
    "Finale": {
     "n": 166,
-    "accuracy": 0.6145
+    "accuracy": 0.6205
    }
   },
   "betting": {
@@ -137,14 +137,14 @@
   },
   {
    "player": "Jodar R.",
-   "elo": 2059.7,
-   "hard": 1868.9,
+   "elo": 2011.0,
+   "hard": 1801.0,
    "clay": 1957.2,
    "grass": 1546.7,
    "rank": 24,
    "pts": 1927,
-   "form10": "8-2",
-   "streak": 5,
+   "form10": "7-3",
+   "streak": -1,
    "matches": 42
   },
   {
@@ -160,6 +160,18 @@
    "matches": 158
   },
   {
+   "player": "Fritz T.",
+   "elo": 2005.8,
+   "hard": 1949.5,
+   "clay": 1736.1,
+   "grass": 1924.5,
+   "rank": 10,
+   "pts": 3300,
+   "form10": "9-1",
+   "streak": 5,
+   "matches": 544
+  },
+  {
    "player": "Draper J.",
    "elo": 1990.5,
    "hard": 2012.3,
@@ -170,18 +182,6 @@
    "form10": "6-4",
    "streak": -1,
    "matches": 171
-  },
-  {
-   "player": "Fritz T.",
-   "elo": 1987.8,
-   "hard": 1928.4,
-   "clay": 1736.1,
-   "grass": 1924.5,
-   "rank": 10,
-   "pts": 3300,
-   "form10": "8-2",
-   "streak": -1,
-   "matches": 544
   },
   {
    "player": "Auger-Aliassime F.",
@@ -2494,34 +2494,34 @@
   },
   {
    "player": "Fritz T.",
-   "matches": 542,
-   "wins": 333,
+   "matches": 543,
+   "wins": 334,
    "losses": 209,
-   "sets_for": 842,
+   "sets_for": 844,
    "sets_against": 599,
-   "games_for": 7666,
-   "games_against": 6894,
-   "tiebreak_wins": 178,
+   "games_for": 7679,
+   "games_against": 6904,
+   "tiebreak_wins": 179,
    "tiebreak_losses": 136,
    "deciding_wins": 105,
    "deciding_losses": 81,
-   "straight_wins": 205,
+   "straight_wins": 206,
    "grand_slam_matches": 111,
    "grand_slam_wins": 71,
-   "hard_matches": 366,
-   "hard_wins": 226,
+   "hard_matches": 367,
+   "hard_wins": 227,
    "clay_matches": 91,
    "clay_wins": 50,
    "grass_matches": 85,
    "grass_wins": 57,
-   "win_rate": 0.6144,
-   "set_win_rate": 0.5843,
-   "game_win_rate": 0.5265,
-   "tiebreak_win_rate": 0.5669,
+   "win_rate": 0.6151,
+   "set_win_rate": 0.5849,
+   "game_win_rate": 0.5266,
+   "tiebreak_win_rate": 0.5683,
    "deciding_win_rate": 0.5645,
-   "straight_win_rate": 0.6156,
+   "straight_win_rate": 0.6168,
    "grand_slam_win_rate": 0.6396,
-   "hard_win_rate": 0.6175,
+   "hard_win_rate": 0.6185,
    "clay_win_rate": 0.5495,
    "grass_win_rate": 0.6706
   },
@@ -18663,6 +18663,39 @@
    "grass_win_rate": 0.4286
   },
   {
+   "player": "Jodar R.",
+   "matches": 42,
+   "wins": 30,
+   "losses": 12,
+   "sets_for": 70,
+   "sets_against": 43,
+   "games_for": 585,
+   "games_against": 472,
+   "tiebreak_wins": 5,
+   "tiebreak_losses": 9,
+   "deciding_wins": 11,
+   "deciding_losses": 3,
+   "straight_wins": 18,
+   "grand_slam_matches": 10,
+   "grand_slam_wins": 7,
+   "hard_matches": 16,
+   "hard_wins": 9,
+   "clay_matches": 23,
+   "clay_wins": 19,
+   "grass_matches": 3,
+   "grass_wins": 2,
+   "win_rate": 0.7143,
+   "set_win_rate": 0.6195,
+   "game_win_rate": 0.5535,
+   "tiebreak_win_rate": 0.3571,
+   "deciding_win_rate": 0.7857,
+   "straight_win_rate": 0.6,
+   "grand_slam_win_rate": 0.7,
+   "hard_win_rate": 0.5625,
+   "clay_win_rate": 0.8261,
+   "grass_win_rate": 0.6667
+  },
+  {
    "player": "Knippschild J.",
    "matches": 42,
    "wins": 14,
@@ -18760,39 +18793,6 @@
    "hard_win_rate": 0.2222,
    "clay_win_rate": 0.3103,
    "grass_win_rate": 0.3333
-  },
-  {
-   "player": "Jodar R.",
-   "matches": 41,
-   "wins": 30,
-   "losses": 11,
-   "sets_for": 70,
-   "sets_against": 41,
-   "games_for": 575,
-   "games_against": 459,
-   "tiebreak_wins": 5,
-   "tiebreak_losses": 8,
-   "deciding_wins": 11,
-   "deciding_losses": 3,
-   "straight_wins": 18,
-   "grand_slam_matches": 10,
-   "grand_slam_wins": 7,
-   "hard_matches": 15,
-   "hard_wins": 9,
-   "clay_matches": 23,
-   "clay_wins": 19,
-   "grass_matches": 3,
-   "grass_wins": 2,
-   "win_rate": 0.7317,
-   "set_win_rate": 0.6306,
-   "game_win_rate": 0.5561,
-   "tiebreak_win_rate": 0.3846,
-   "deciding_win_rate": 0.7857,
-   "straight_win_rate": 0.6,
-   "grand_slam_win_rate": 0.7,
-   "hard_win_rate": 0.6,
-   "clay_win_rate": 0.8261,
-   "grass_win_rate": 0.6667
   },
   {
    "player": "Nagal S.",
@@ -20749,16 +20749,16 @@
    "series": "ATP500",
    "surface": "Hard",
    "round": "The Final",
-   "winner": "Jodar R.",
-   "loser": "Fritz T.",
-   "wrank": 24,
-   "lrank": 10,
-   "p_win": 0.346,
+   "winner": "Fritz T.",
+   "loser": "Jodar R.",
+   "wrank": 10,
+   "lrank": 24,
+   "p_win": 0.654,
    "predicted_player": "Fritz T.",
    "predicted_prob": 0.654,
-   "model_correct": false,
-   "market_p_win": 0.42,
-   "score": null,
+   "model_correct": true,
+   "market_p_win": 0.607,
+   "score": "7-6 6-4",
    "retired": false
   },
   {
