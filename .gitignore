@@ -3,3 +3,12 @@ __pycache__/
 data/*.xlsx
 data/model.joblib
 data/sackmann/
+
+# Secrets : jamais versionnes. .env.example reste suivi, il ne contient que des
+# noms de variables.
+.env
+.env.local
+.env.*.local
+!.env.example
+*.key
+*.pem
