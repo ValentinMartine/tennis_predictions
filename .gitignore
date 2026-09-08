@@ -1,8 +1,19 @@
 __pycache__/
+*.py[cod]
+*.pyo
 .venv/
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
+dist/
+build/
 data/*.xlsx
 data/model.joblib
 data/sackmann/
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
 
 # Secrets : jamais versionnes. .env.example reste suivi, il ne contient que des
 # noms de variables.
