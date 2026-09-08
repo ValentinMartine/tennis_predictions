@@ -171,14 +171,19 @@ def main() -> int:
             pm.append(q if m["p1"] == m["winner"] else 1 - q)
             ym.append(y[i])
     pm, ym = np.array(pm), np.array(ym)
+    market = {"accuracy": None, "log_loss": None, "n": 0}
+    if len(pm):
+        market = {
+            "accuracy": round(float(((pm > 0.5) == (ym == 1)).mean()), 4),
+            "log_loss": round(float(log_loss(ym, np.clip(pm, 1e-6, 1 - 1e-6))), 4),
+            "n": int(len(pm)),
+        }
     metrics = {
         "n_test": int(te.sum()),
         "elo": block(X["p_elo"].to_numpy()),
         "ml": block(p_ml),
         "blend": block(p_blend),
-        "market": {"accuracy": round(float(((pm > 0.5) == (ym == 1)).mean()), 4),
-                   "log_loss": round(float(log_loss(ym, np.clip(pm, 1e-6, 1 - 1e-6))), 4),
-                   "n": int(len(pm))},
+        "market": market,
         "blend_w": w,
     }
 
