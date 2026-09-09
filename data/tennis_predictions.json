@@ -1,9 +1,9 @@
 {
- "generated_at": "2026-09-09T07:46:58+00:00",
+ "generated_at": "2026-09-09T11:19:02+00:00",
  "method": "Elo global+surface (K type FiveThirtyEight) + LightGBM (classement, forme, activité, H2H), blend réglé sur validation 2023, test 2024+",
  "source": "tennis-data.co.uk (ATP, seasons 2000-2026) + fallback sackmann-compatible-fallback",
  "source_status": {
-  "checked_at": "2026-09-09T07:45:48+00:00",
+  "checked_at": "2026-09-09T11:17:03+00:00",
   "primary_source": "tennis-data.co.uk",
   "fallback_sources": [
    "https://raw.githubusercontent.com/azhou5849/tennis-atp-sackmann-data/master/atp_matches_{y}.csv",
