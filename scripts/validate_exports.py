@@ -2,12 +2,17 @@
 from __future__ import annotations
 
 import json
+import sys
 from datetime import date
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-PREDICTIONS = ROOT / "data" / "tennis_predictions.json"
-HISTORY = ROOT / "data" / "tennis_elo_history.json"
+
+
+def export_paths(tour: str) -> tuple[Path, Path]:
+    suffix = "" if tour == "atp" else f"_{tour}"
+    return (ROOT / "data" / f"tennis_predictions{suffix}.json",
+            ROOT / "data" / f"tennis_elo_history{suffix}.json")
 
 
 def _load(path: Path) -> dict:
@@ -27,6 +32,7 @@ def _assert(condition: bool, message: str) -> None:
 # les sources de secours (ATP/Tour Finals).
 ALLOWED_SERIES = {
     "Grand Slam", "Masters 1000", "Masters Cup", "Tour Finals", "ATP", "ATP250", "ATP500",
+    "WTA 1000", "WTA 500", "WTA 250",
 }
 
 
@@ -112,13 +118,27 @@ def validate_alignment(data: dict, history: dict) -> None:
     _assert(active.issubset(ranked), "Active Elo players missing from the ranking history")
 
 
-def main() -> int:
-    predictions = _load(PREDICTIONS)
-    history = _load(HISTORY)
+def validate_upcoming(data: dict) -> None:
+    """Un match à venir n'a pas de résultat : seule sa probabilité doit être publiée."""
+    for match in data.get("upcoming") or []:
+        pair = {match["player1"], match["player2"]}
+        _assert(match.get("predicted_player") in pair, f"Prediction outside match pair: {match}")
+        probability = match.get("predicted_prob")
+        _assert(probability is None or 0.5 <= probability <= 1.0, f"Invalid upcoming probability: {match}")
+        _assert("winner" not in match and "model_correct" not in match,
+                f"Upcoming match must not carry a result: {match}")
+
+
+def main(argv: list[str] | None = None) -> int:
+    tour = (argv or sys.argv[1:] or ["atp"])[0].lower()
+    predictions_path, history_path = export_paths(tour)
+    predictions = _load(predictions_path)
+    history = _load(history_path)
     validate_predictions(predictions)
     validate_history(history)
     validate_alignment(predictions, history)
-    print("exports OK")
+    validate_upcoming(predictions)
+    print(f"exports {tour} OK")
     return 0
 
 

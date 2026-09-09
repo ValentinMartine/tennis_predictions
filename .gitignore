@@ -9,7 +9,9 @@ dist/
 build/
 data/*.xlsx
 data/model.joblib
+data/model_wta.joblib
 data/sackmann/
+.serena/
 .vscode/
 .idea/
 .DS_Store

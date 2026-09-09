@@ -4,8 +4,10 @@ import pandas as pd
 
 from scripts.download_data import (
     MAIN_TOUR_SERIES,
+    is_finished_set,
     known_surnames,
     score_columns,
+    series_from_sackmann_level,
     score_columns_from_valuebetennis,
     short_name_from_full,
     valuebetennis_round,
@@ -29,8 +31,7 @@ def test_score_columns_extracts_sets_and_games() -> None:
 
 
 def test_write_source_status_records_current_year(tmp_path, monkeypatch) -> None:
-    target = tmp_path / "source_status.json"
-    monkeypatch.setattr("scripts.download_data.SOURCE_STATUS", target)
+    monkeypatch.setattr("scripts.download_data.DATA", tmp_path)
 
     write_source_status(
         [{"year": 2026, "source": "sackmann-compatible-fallback", "ok": True, "url": "https://example.test"}],
@@ -38,9 +39,29 @@ def test_write_source_status_records_current_year(tmp_path, monkeypatch) -> None
         current=2026,
     )
 
-    content = Path(target).read_text(encoding="utf-8")
+    content = Path(tmp_path / "source_status.json").read_text(encoding="utf-8")
     assert '"current_year_source": "sackmann-compatible-fallback"' in content
     assert '"healthy": true' in content
+
+
+def test_each_tour_writes_its_own_status_file(tmp_path, monkeypatch) -> None:
+    monkeypatch.setattr("scripts.download_data.DATA", tmp_path)
+
+    write_source_status([{"year": 2026, "source": "valuebetennis", "ok": True, "url": None}],
+                        healthy=True, current=2026, tour="wta")
+
+    assert (tmp_path / "source_status_wta.json").exists()
+    assert not (tmp_path / "source_status.json").exists()
+
+
+def test_wta_levels_use_the_wta_vocabulary() -> None:
+    assert series_from_sackmann_level("PM", "wta") == "WTA 1000"
+    assert series_from_sackmann_level("I", "wta") == "WTA 250"
+    assert series_from_sackmann_level("G", "wta") == "Grand Slam"
+    assert series_from_sackmann_level("M", "atp") == "Masters 1000"
+    assert valuebetennis_series("Main tour", "wta") == "WTA 250"
+    assert valuebetennis_series("Masters", "wta") == "WTA 1000"
+    assert valuebetennis_series("ITF", "wta") not in MAIN_TOUR_SERIES
 
 
 def test_valuebetennis_mappings_use_existing_labels() -> None:
@@ -142,3 +163,36 @@ def test_index_ignores_the_season_being_rebuilt(tmp_path, monkeypatch) -> None:
 
     assert short_name_from_full("Taylor Harry Fritz", known_surnames(exclude_year=2026)) == "Fritz T."
     assert short_name_from_full("Taylor Harry Fritz", known_surnames()) == "Fritz T.H."
+
+
+def test_incomplete_final_set_is_dropped_and_flagged() -> None:
+    """« 5-7 3-6 7-5 6-3 5-5 » : le 5e set est en cours ou tronqué par la source."""
+    values = score_columns_from_valuebetennis("5-7 3-6 7-5 6-3 5-5", winner_is_player1=True)
+
+    assert values["_partial"] is True
+    assert values["_complete_sets"] == 4
+    assert values["W5"] is None and values["L5"] is None
+
+
+def test_a_clean_score_is_not_flagged_partial() -> None:
+    values = score_columns_from_valuebetennis("6-4 3-6 7-6(4)", winner_is_player1=True)
+
+    assert values["_partial"] is False
+    assert values["Wsets"] == 2 and values["Lsets"] == 1
+
+
+def test_finished_set_recognises_the_usual_endings() -> None:
+    assert is_finished_set(6, 4) and is_finished_set(7, 5) and is_finished_set(7, 6)
+    assert is_finished_set(10, 8)
+    assert not is_finished_set(6, 6)
+    assert not is_finished_set(5, 5)
+    assert not is_finished_set(2, 1)
+
+
+def test_a_retirement_in_the_first_sets_stays_a_result() -> None:
+    """« 6-4 2-1 » : abandon au 3e jeu du 2e set, le vainqueur est connu."""
+    values = score_columns_from_valuebetennis("6-4 2-1", winner_is_player1=True)
+
+    assert values["_complete_sets"] == 1
+    assert values["_partial"] is True
+    assert values["Wsets"] == 1 and values["Lsets"] is None

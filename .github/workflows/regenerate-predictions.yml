@@ -33,22 +33,30 @@ jobs:
           pip install -r requirements.txt
 
       - name: Download seasons
-        run: python scripts/download_data.py
+        run: |
+          python scripts/download_data.py atp
+          python scripts/download_data.py wta
+
+      - name: Fetch upcoming schedule
+        run: python scripts/fetch_upcoming.py
 
       - name: Train and export
         run: |
-          python scripts/train_and_backtest.py
-          python -m src.export
-          python scripts/validate_exports.py
+          python scripts/train_and_backtest.py atp
+          python -m src.export atp
+          python scripts/train_and_backtest.py wta
+          python -m src.export wta
+          python scripts/validate_exports.py atp
+          python scripts/validate_exports.py wta
 
       - name: Commit regenerated data
         shell: bash
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/tennis_predictions.json
-          git add data/tennis_elo_history.json
-          git add data/source_status.json
+          git add data/tennis_predictions.json data/tennis_elo_history.json data/source_status.json
+          git add data/tennis_predictions_wta.json data/tennis_elo_history_wta.json data/source_status_wta.json
+          git add data/upcoming_raw.json
           if git diff --cached --quiet; then
             echo "No prediction changes."
           else

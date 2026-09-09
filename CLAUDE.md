@@ -1,10 +1,18 @@
 # tennis_predictions : repères projet
 
-Prédiction des matchs ATP. Règles générales dans `~/.claude/CLAUDE.md`.
+Prédiction des matchs **ATP et WTA**. Règles générales dans `~/.claude/CLAUDE.md`.
+
+Tout est paramétré par circuit : `python scripts/download_data.py wta`,
+`python scripts/train_and_backtest.py wta`, `python -m src.export wta`,
+`python scripts/validate_exports.py wta`. Sans argument, le circuit est `atp`.
+Les fichiers WTA portent le suffixe `_wta` ; ceux de l'ATP gardent leur nom d'origine.
 
 ## Chemins clés
 - `scripts/download_data.py` : source primaire tennis-data.co.uk, secours Valuebetennis puis
-  miroirs Sackmann. Contient la **passerelle de noms** et le **filtre de périmètre**.
+  miroirs Sackmann. Contient la **passerelle de noms**, le **filtre de périmètre** et le
+  dictionnaire `TOURS` (une source primaire et des miroirs par circuit).
+- `scripts/fetch_upcoming.py` : calendrier des matchs à venir, tous circuits confondus,
+  dans `data/upcoming_raw.json`. Le tri par circuit se fait à l'export.
 - `src/elo.py` : Elo global et **par surface**, K décroissant type FiveThirtyEight.
 - `src/pipeline.py` : features sans fuite : classement, forme, activité, H2H (volume, par surface,
   en Grand Chelem, récent), format, surface.
@@ -28,15 +36,33 @@ Prédiction des matchs ATP. Règles générales dans `~/.claude/CLAUDE.md`.
 - **Classement et points ATP absents (cas du secours) : écart neutre, pas de faux rang.** Mesuré sur
   le test 2024+ : écart neutre log-loss 0,6233, NaN 0,6401, valeur commune 250 invisible dans l'export.
   Le champ `rank` est exporté à `None` et la colonne est masquée côté site.
+- **Matchs à venir : tri par identifiant de tournoi, jamais par nom.** Les tableaux masculin
+  et féminin d'un Grand Chelem portent le même nom et deux identifiants (16866 et 16865 pour
+  l'US Open 2026). Le filtrage par nom faisait entrer les quarts de finale WTA dans l'export
+  ATP, où les joueuses inconnues du modèle donnaient des probabilités à 50 %. Contrepartie
+  assumée : un tournoi sans match terminé cette saison n'est pas encore reconnu.
+- **Scores tronqués : les signaler, pas les corriger.** Valuebetennis coupe le dernier set
+  d'un match sur huit (« 5-7 3-6 7-5 6-3 5-5 »). Les sets inachevés sont écartés du décompte,
+  le match porte `ScoreStatus = partial` et le site affiche un astérisque. Sans ce marquage,
+  157 matchs de la saison 2026 affichaient un score qui contredisait le vainqueur annoncé.
+- **Le classement du site liste les joueurs actifs sur 12 mois glissants**, pas sur la fenêtre
+  comparée. Exiger un match dans la fenêtre sortait le numéro un mondial dès qu'il ne jouait
+  pas ce mois-là (Alcaraz premier en août 2026 parce que Sinner n'avait pas rejoué depuis
+  Wimbledon). L'historique Elo exporte un compte de matchs par mois pour que l'inactivité
+  se lise dans le tableau.
 - `data/*.xlsx` est **gitignoré** : la CI retélécharge les 27 saisons à chaque exécution. Le corpus
   local (tennis-data en cache) et celui de la CI peuvent donc différer ; comparer `data/source_status.json`
   avant de conclure à une régression de modèle.
 
 ## État
-Blend ML+Elo : accuracy 0,6433, log-loss 0,6233 sur le test 2024+ (7 189 matchs), mieux que la baseline
-Elo (0,6413 / 0,6341). **La stratégie de mise reste négative hors échantillon** : seuils choisis sur 2023
-(`edge >= 3 %`, `confiance >= 75 %`) donnent ROI -1,12 % sur 439 paris, capital ¼ Kelly ×0,26. Le modèle
-progresse mais ne bat pas les cotes moyennes du marché (0,679 / 0,5935) : ne pas prétendre le contraire.
+| Circuit | Matchs | Test 2024+ | Blend | Elo seul | Marché |
+| --- | --- | --- | --- | --- | --- |
+| ATP | 70 945 | 7 278 | 0,642 / 0,6240 | 0,641 / 0,6345 | 0,678 / 0,5937 |
+| WTA | 65 397 | 6 412 | 0,650 / 0,6198 | 0,650 / 0,6232 | 0,679 / 0,5862 |
+
+Le blend ne dépasse la baseline Elo que d'un cheveu, surtout côté WTA (poids ML 0,24), et **aucun
+des deux circuits ne bat les cotes moyennes du marché** : ne pas prétendre le contraire. La
+stratégie de mise reste négative hors échantillon.
 
 Toute saison servie par le secours arrive **sans classement ni points ATP** : en local seule 2026 est
 concernée (0 rang sur 1 884 matchs), en CI toutes les saisons depuis 2021. Les deux variables les plus

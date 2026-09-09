@@ -26,9 +26,15 @@ def evaluate(name, p, y, mask):
     return acc, ll
 
 
-def main() -> int:
-    allm = load_matches()
-    print(f"{len(allm)} matchs chargés ({allm['Date'].min().date()} -> {allm['Date'].max().date()})")
+def model_path(tour: str) -> Path:
+    name = "model.joblib" if tour == "atp" else f"model_{tour}.joblib"
+    return Path(__file__).resolve().parents[1] / "data" / name
+
+
+def main(argv: list[str] | None = None) -> int:
+    tour = (argv or sys.argv[1:] or ["atp"])[0].lower()
+    allm = load_matches(tour)
+    print(f"[{tour}] {len(allm)} matchs chargés ({allm['Date'].min().date()} -> {allm['Date'].max().date()})")
     X, y, metas, _ = build_features(allm)
     dates = np.array([m["date"] for m in metas], dtype="datetime64[ns]")
 
@@ -79,8 +85,8 @@ def main() -> int:
 
     # persiste le modèle + méta pour l'export
     import joblib
-    out = Path(__file__).resolve().parents[1] / "data" / "model.joblib"
-    joblib.dump({"model": model, "blend_w": best_w}, out)
+    out = model_path(tour)
+    joblib.dump({"model": model, "blend_w": best_w, "tour": tour}, out)
     print(f"\nmodèle -> {out.name}")
     return 0
 

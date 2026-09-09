@@ -12,17 +12,34 @@ from pathlib import Path
 
 import joblib
 import numpy as np
+import pandas as pd
 from sklearn.metrics import log_loss
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from src.elo import SURFACES  # noqa: E402
-from src.pipeline import FEATURES, build_features, load_matches, market_prob  # noqa: E402
+from scripts.download_data import known_surnames, short_name_from_full  # noqa: E402
+from src.pipeline import (  # noqa: E402
+    FEATURES, build_features, load_matches, market_prob, upcoming_features,
+)
 from src.sackmann_stats import aggregate_player_stats, load_match_stats  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[1]
-OUT = ROOT / "data" / "tennis_predictions.json"
-OUT_HIST = ROOT / "data" / "tennis_elo_history.json"
-SOURCE_STATUS = ROOT / "data" / "source_status.json"
+UPCOMING_RAW = ROOT / "data" / "upcoming_raw.json"
+
+
+def _suffix(tour: str) -> str:
+    return "" if tour == "atp" else f"_{tour}"
+
+
+def out_paths(tour: str) -> tuple[Path, Path, Path, Path]:
+    """Prédictions, historique Elo, statut source et modèle du circuit demandé."""
+    data = ROOT / "data"
+    return (
+        data / f"tennis_predictions{_suffix(tour)}.json",
+        data / f"tennis_elo_history{_suffix(tour)}.json",
+        data / f"source_status{_suffix(tour)}.json",
+        data / f"model{_suffix(tour)}.joblib",
+    )
 SITE_DIR = Path("C:/Users/valen/Documents/Projets/Projets_Informatiques/Perso/valentinmartine/public/data")
 VAL_START = np.datetime64("2023-01-01")
 TEST_START = np.datetime64("2024-01-01")
@@ -155,10 +172,79 @@ def _enrich_with_sackmann_stats(base_stats: list[dict], allm) -> list[dict]:
     return enriched
 
 
-def main() -> int:
-    allm = load_matches()
+def build_upcoming(tour: str, allm, state, model, blend_w) -> list[dict]:
+    """Matchs à venir du circuit, prédits avec l'état arrêté au dernier match connu."""
+    if not UPCOMING_RAW.exists():
+        return []
+    raw = json.loads(UPCOMING_RAW.read_text(encoding="utf-8"))
+    season = allm[allm["Date"].dt.year == allm["Date"].max().year]
+    # Le calendrier mêle ATP, WTA, Challenger et ITF sans indiquer le niveau. Seul
+    # l'identifiant de tournoi tranche : les tableaux masculin et féminin d'un même
+    # Grand Chelem portent le même nom mais deux identifiants (16866 et 16865 pour
+    # l'US Open 2026). Conséquence assumée : un tournoi qui n'a pas encore produit de
+    # match terminé cette saison n'est pas encore reconnu.
+    known_ids = {_id_key(x) for x in season["ATP"].dropna().unique()}
+    surnames = known_surnames(tour=tour)
+    today = datetime.now(timezone.utc).date().isoformat()
+
+    rows, metas = [], []
+    for match in raw.get("matches", []):
+        if (match.get("date") or "") < today:
+            continue
+        if _id_key(match.get("tournament_id")) not in known_ids:
+            continue
+        p1 = short_name_from_full(match["player1"], surnames)
+        p2 = short_name_from_full(match["player2"], surnames)
+        if p1 == p2:
+            continue
+        best_of = 5 if (tour == "atp" and _is_slam(season, match)) else 3
+        rows.append(upcoming_features(state, p1, p2, match.get("surface") or "Hard",
+                                      best_of, state["last_date"]))
+        metas.append((match, p1, p2))
+
+    if not rows:
+        return []
+    frame = pd.DataFrame(rows)[FEATURES]
+    p_ml = model.predict_proba(frame)[:, 1]
+    p_blend = blend_w * p_ml + (1 - blend_w) * frame["p_elo"].to_numpy()
+
+    upcoming = []
+    for (match, p1, p2), probability in zip(metas, p_blend):
+        probability = float(probability)
+        market = market_prob(match.get("odds1"), match.get("odds2"))
+        upcoming.append({
+            "date": match["date"], "time": match.get("time"),
+            "tournament": match["tournament"], "surface": match.get("surface"),
+            "round": match.get("round"),
+            "player1": p1, "player2": p2,
+            "rank1": match.get("rank1"), "rank2": match.get("rank2"),
+            "odds1": match.get("odds1"), "odds2": match.get("odds2"),
+            "p1_win": round(probability, 3),
+            "predicted_player": p1 if probability >= 0.5 else p2,
+            "predicted_prob": round(probability if probability >= 0.5 else 1 - probability, 3),
+            "market_p1_win": round(market, 3) if market is not None else None,
+        })
+    upcoming.sort(key=lambda m: (m["date"], m["time"] or ""))
+    return upcoming
+
+
+def _id_key(value) -> str:
+    """Identifiant de tournoi comparable : pandas rend 16866.0 là où le JSON dit 16866."""
+    text = str(value).strip()
+    return text[:-2] if text.endswith(".0") else text
+
+
+def _is_slam(season, match) -> bool:
+    same = season[season["ATP"].map(_id_key) == _id_key(match.get("tournament_id"))]
+    return bool(len(same)) and str(same["Series"].iloc[0]) == "Grand Slam"
+
+
+def main(argv: list[str] | None = None) -> int:
+    tour = (argv or sys.argv[1:] or ["atp"])[0].lower()
+    OUT, OUT_HIST, SOURCE_STATUS, MODEL = out_paths(tour)
+    allm = load_matches(tour)
     X, y, metas, state = build_features(allm)
-    bundle = joblib.load(ROOT / "data" / "model.joblib")
+    bundle = joblib.load(MODEL)
     model, w = bundle["model"], bundle["blend_w"]
     p_ml = model.predict_proba(X[FEATURES])[:, 1]
     p_blend = w * p_ml + (1 - w) * X["p_elo"].to_numpy()
@@ -335,6 +421,9 @@ def main() -> int:
             "market_p_win": round(float(q), 3) if q is not None else None,
             "score": m["score"],
             "retired": str(m.get("comment") or "") == "Retired",
+            # La source de secours tronque le dernier set d'un match sur huit : le dire
+            # plutôt que d'afficher un score qui contredit le vainqueur.
+            "score_partial": str(m.get("score_status") or "") == "partial",
         })
 
     # ===== Historique Elo 2000-2026 =====
@@ -375,12 +464,17 @@ def main() -> int:
     for p, hist in history.items():
         if len(hist) < 30:
             continue
-        monthly: dict[str, float] = {}
+        # Troisième valeur : matchs disputés dans le mois. Le site s'en sert pour dire
+        # combien un joueur a joué sur la période affichée, au lieu de laisser croire
+        # qu'un Elo repris du dernier match connu vient d'une activité récente.
+        monthly: dict[str, list] = {}
         for d, e in hist:
             ym = f"{d.year}-{d.month:02d}"
-            monthly[ym] = e
+            entry = monthly.setdefault(ym, [ym, e, 0])
+            entry[1] = e
+            entry[2] += 1
             months.add(ym)
-        pts_series = sorted(monthly.items())
+        pts_series = [monthly[ym] for ym in sorted(monthly)]
         if len(pts_series) >= 2:
             ranking_timeline.append({"player": p, "points": pts_series, "matches": len(hist)})
     default_players = [p["player"] for p in peaks[:8]]
@@ -411,8 +505,9 @@ def main() -> int:
 
     player_stats = _enrich_with_sackmann_stats(_player_match_stats(allm), allm)
     has_sackmann_stats = any("stat_elo" in row for row in player_stats)
+    upcoming = build_upcoming(tour, allm, state, model, w)
     source_status = json.loads(SOURCE_STATUS.read_text(encoding="utf-8")) if SOURCE_STATUS.exists() else None
-    source_label = "tennis-data.co.uk (ATP, seasons 2000-2026)"
+    source_label = f"tennis-data.co.uk ({tour.upper()}, seasons 2000-{allm['Date'].max().year})"
     current_year_source = source_status.get("current_year_source") if source_status else None
     current_year_url = source_status.get("current_year_url") if source_status else None
     if current_year_source and current_year_source != "tennis-data.co.uk":
@@ -424,6 +519,7 @@ def main() -> int:
         "generated_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "method": "Elo global+surface (K type FiveThirtyEight) + LightGBM (classement, forme, "
                   "activité, H2H), blend réglé sur validation 2023, test 2024+",
+        "tour": tour,
         "source": source_label,
         "source_status": source_status,
         "refresh_status": "ok" if not current_year_source or current_year_source == "tennis-data.co.uk" else "primary_source_unavailable_fallback_used",
@@ -439,6 +535,7 @@ def main() -> int:
         "elo_peaks": peaks,
         "year_end": year_end_list,
         "slam_winners": slam_winners,
+        "upcoming": upcoming,
     }
     OUT.write_text(json.dumps(payload, ensure_ascii=False, indent=1), encoding="utf-8")
     hist_payload = {
@@ -452,7 +549,7 @@ def main() -> int:
         (SITE_DIR / OUT.name).write_text(json.dumps(payload, ensure_ascii=False, indent=1), encoding="utf-8")
         (SITE_DIR / OUT_HIST.name).write_text(json.dumps(hist_payload, ensure_ascii=False), encoding="utf-8")
     print(f"écrit {OUT.name} : {len(players)} joueurs, {len(recent_matches)} matchs saison")
-    print(f"écrit {OUT_HIST.name} : {len(elo_timeline)} trajectoires")
+    print(f"écrit {OUT_HIST.name} : {len(elo_timeline)} trajectoires, {len(upcoming)} matchs à venir")
     print("top 5 Elo :", ", ".join(f"{p['player']} ({p['elo']})" for p in players[:5]))
     return 0
 

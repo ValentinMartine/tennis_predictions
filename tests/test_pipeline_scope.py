@@ -1,4 +1,5 @@
 """Périmètre des données et classements manquants."""
+import numpy as np
 import pandas as pd
 
 from src.export import _opt_int
@@ -42,3 +43,45 @@ def test_optional_rank_export_rejects_nan_and_zero() -> None:
     assert _opt_int(float("nan")) is None
     assert _opt_int(0) is None
     assert _opt_int(None) is None
+
+
+def test_upcoming_keeps_only_the_tour_own_tournament_ids(tmp_path, monkeypatch) -> None:
+    """Les tableaux masculin et féminin d'un Grand Chelem partagent le nom, pas l'identifiant."""
+    import json
+
+    from src import export
+
+    saison = pd.DataFrame({
+        "ATP": [16866], "Tournament": ["U.S. Open - New York"], "Series": ["Grand Slam"],
+        "Date": [pd.Timestamp("2026-09-01")],
+    })
+    raw = {"matches": [
+        {"date": "2999-01-01", "time": "20:00", "tournament_id": 16865,
+         "tournament": "U.S. Open - New York", "surface": "Hard", "round": "Quarterfinals",
+         "player1": "Aryna Sabalenka", "player2": "Jessica Pegula"},
+        {"date": "2999-01-01", "time": "21:30", "tournament_id": 16866,
+         "tournament": "U.S. Open - New York", "surface": "Hard", "round": "Quarterfinals",
+         "player1": "Karen Khachanov", "player2": "Alexander Blockx"},
+    ]}
+    target = tmp_path / "upcoming_raw.json"
+    target.write_text(json.dumps(raw), encoding="utf-8")
+    monkeypatch.setattr(export, "UPCOMING_RAW", target)
+
+    gardes = []
+    monkeypatch.setattr(export, "upcoming_features",
+                        lambda state, p1, p2, *a, **k: gardes.append((p1, p2)) or {f: 0.0 for f in export.FEATURES})
+
+    class _Modele:
+        def predict_proba(self, frame):
+            return np.column_stack([np.full(len(frame), 0.4), np.full(len(frame), 0.6)])
+
+    export.build_upcoming("atp", saison, {"last_date": pd.Timestamp("2026-09-08")}, _Modele(), 1.0)
+
+    assert gardes == [("Khachanov K.", "Blockx A.")]
+
+
+def test_tournament_ids_compare_across_pandas_float_coercion() -> None:
+    from src.export import _id_key
+
+    assert _id_key(16866.0) == _id_key(16866) == "16866"
+    assert _id_key("16866") == "16866"

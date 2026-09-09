@@ -27,7 +27,9 @@ ROOT = Path(__file__).resolve().parents[1]
 DATA = ROOT / "data"
 
 NA = float("nan")
-OUT_OF_SCOPE_SERIES = frozenset({"Challenger", "ITF"})
+# Hors périmètre : circuits secondaires et compétitions par équipes, absentes de la
+# source primaire. Les miroirs Sackmann, eux, les fournissent (niveau « D »).
+OUT_OF_SCOPE_SERIES = frozenset({"Challenger", "ITF", "Davis Cup", "Fed Cup"})
 
 
 def _finite(value: float) -> bool:
@@ -55,9 +57,9 @@ FEATURES = [
 ]
 
 
-def load_matches() -> pd.DataFrame:
+def load_matches(tour: str = "atp") -> pd.DataFrame:
     frames = []
-    for f in sorted(DATA.glob("atp_*.xlsx")):
+    for f in sorted(DATA.glob(f"{tour}_*.xlsx")):
         df = pd.read_excel(f)
         frames.append(df)
     allm = pd.concat(frames, ignore_index=True)
@@ -70,7 +72,7 @@ def load_matches() -> pd.DataFrame:
     allm = allm.dropna(subset=["Winner", "Loser"])
     allm = allm.sort_values(["Date", "ATP", "Round"]).reset_index(drop=True)
     # patch résultats récents (Sofascore) éventuel
-    patch = DATA / "results_patch.csv"
+    patch = DATA / ("results_patch.csv" if tour == "atp" else f"results_patch_{tour}.csv")
     if patch.exists():
         extra = pd.read_csv(patch, parse_dates=["Date"])
         last_covered = allm["Date"].max().date()
@@ -108,6 +110,57 @@ def _recent_share_for_player(outcomes: deque, pair: tuple[str, str], player: str
         return 0.0
     side = 0 if player == pair[0] else 1
     return sum(1 for outcome in outcomes if outcome == side) / len(outcomes) - 0.5
+
+
+def upcoming_features(state: dict, p1: str, p2: str, surface: str, best_of: int, date) -> dict:
+    """Features d'un match non joué, à partir de l'état laissé par `build_features`.
+
+    Mêmes expressions que la boucle d'entraînement, avec l'état arrêté au dernier match
+    connu : rien de postérieur n'entre ici, la règle de non-fuite reste vérifiée.
+    """
+    elo = state["elo"]
+    recent, last_dates = state["recent"], state["last_dates"]
+    rank, pts = state["rank"], state["pts"]
+    surface = norm_surface(surface)
+
+    def form(player, n):
+        window = list(recent[player])[-n:]
+        return sum(window) / len(window) if window else 0.5
+
+    def activity(player):
+        return sum(1 for d in last_dates[player] if (date - d).days <= 60)
+
+    key = _pair(p1, p2)
+    counts = state["h2h"][key]
+    total = counts[0] + counts[1]
+    sackmann = state["sackmann"]
+    return {
+        "p_elo": elo.prob(p1, p2, surface),
+        "d_selo": (elo.surf[surface][p1] - elo.surf[surface][p2]) / 100.0,
+        "d_lrank": _log_diff(_finite_or_nan(rank.get(p2)), _finite_or_nan(rank.get(p1))),
+        "d_lpts": _log1p_diff(_finite_or_nan(pts.get(p1)), _finite_or_nan(pts.get(p2))),
+        "d_form10": form(p1, 10) - form(p2, 10),
+        "d_form25": form(p1, 25) - form(p2, 25),
+        "d_activity": (activity(p1) - activity(p2)) / 10.0,
+        "h2h": _share_for_player(counts, key, p1),
+        "h2h_count": math.log1p(total),
+        "h2h_surface": _share_for_player(state["h2h_surface"][(key[0], key[1], surface)], key, p1),
+        "h2h_slam": _share_for_player(state["h2h_slam"][key], key, p1),
+        "h2h_recent": _recent_share_for_player(state["h2h_recent"][key], key, p1),
+        **sackmann.diff_features(p1, p2),
+        "best_of": 1.0 if float(best_of or 3) >= 5 else 0.0,
+        "s_hard": 1.0 if surface == "Hard" else 0.0,
+        "s_clay": 1.0 if surface == "Clay" else 0.0,
+        "s_grass": 1.0 if surface == "Grass" else 0.0,
+    }
+
+
+def _finite_or_nan(value) -> float:
+    try:
+        number = float(value)
+    except (TypeError, ValueError):
+        return NA
+    return number if _finite(number) else NA
 
 
 def _score_workload(m) -> tuple[int, int]:
@@ -160,6 +213,7 @@ def build_features(allm: pd.DataFrame):
         return [{"player": p, "elo": round(r, 1)} for p, r in act[:n]]
 
     rows, ys, metas = [], [], []
+    date = None
     for _, m in allm.iterrows():
         w, l = str(m["Winner"]).strip(), str(m["Loser"]).strip()
         surface = norm_surface(m.get("Surface"))
@@ -247,6 +301,7 @@ def build_features(allm: pd.DataFrame):
             "avgw": m.get("AvgW"), "avgl": m.get("AvgL"),
             "score": _score_str(m),
             "comment": m.get("Comment"),
+            "score_status": m.get("ScoreStatus"),
         })
 
         # mises à jour post-match
@@ -287,7 +342,11 @@ def build_features(allm: pd.DataFrame):
     X = pd.DataFrame(rows)[FEATURES]
     y = np.array(ys)
     state = {"elo": elo, "recent": recent, "rank": rank, "pts": pts, "last_dates": last_dates,
-             "history": history, "year_end": year_end, "slam_finals": slam_finals}
+             "history": history, "year_end": year_end, "slam_finals": slam_finals,
+             # Compteurs de confrontations directes : rejoués tels quels pour un match
+             # à venir, sinon ses features h2h seraient neutres alors qu'on les connaît.
+             "h2h": h2h, "h2h_surface": h2h_surface, "h2h_slam": h2h_slam,
+             "h2h_recent": h2h_recent, "sackmann": sackmann, "last_date": date}
     return X, y, metas, state
 
 

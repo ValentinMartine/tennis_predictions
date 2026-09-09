@@ -1,0 +1,210 @@
+{
+  "checked_at": "2026-09-09T15:58:20+00:00",
+  "tour": "wta",
+  "primary_source": "tennis-data.co.uk",
+  "fresh_csv_fallback": "Valuebetennis",
+  "fresh_csv_fallback_url": "https://www.valuebetennis.com/donnees.htm",
+  "current_year_max_staleness_days": 3,
+  "fallback_sources": [
+    "https://raw.githubusercontent.com/JeffSackmann/tennis_wta/master/wta_matches_{y}.csv",
+    "https://raw.githubusercontent.com/azhou5849/tennis-wta-sackmann-data/master/wta_matches_{y}.csv"
+  ],
+  "records": [
+    {
+      "year": 2000,
+      "source": "cache",
+      "ok": true,
+      "url": null,
+      "error": null
+    },
+    {
+      "year": 2001,
+      "source": "cache",
+      "ok": true,
+      "url": null,
+      "error": null
+    },
+    {
+      "year": 2002,
+      "source": "cache",
+      "ok": true,
+      "url": null,
+      "error": null
+    },
+    {
+      "year": 2003,
+      "source": "cache",
+      "ok": true,
+      "url": null,
+      "error": null
+    },
+    {
+      "year": 2004,
+      "source": "cache",
+      "ok": true,
+      "url": null,
+      "error": null
+    },
+    {
+      "year": 2005,
+      "source": "cache",
+      "ok": true,
+      "url": null,
+      "error": null
+    },
+    {
+      "year": 2006,
+      "source": "cache",
+      "ok": true,
+      "url": null,
+      "error": null
+    },
+    {
+      "year": 2007,
+      "source": "cache",
+      "ok": true,
+      "url": null,
+      "error": null
+    },
+    {
+      "year": 2008,
+      "source": "cache",
+      "ok": true,
+      "url": null,
+      "error": null
+    },
+    {
+      "year": 2009,
+      "source": "cache",
+      "ok": true,
+      "url": null,
+      "error": null
+    },
+    {
+      "year": 2010,
+      "source": "cache",
+      "ok": true,
+      "url": null,
+      "error": null
+    },
+    {
+      "year": 2011,
+      "source": "cache",
+      "ok": true,
+      "url": null,
+      "error": null
+    },
+    {
+      "year": 2012,
+      "source": "cache",
+      "ok": true,
+      "url": null,
+      "error": null
+    },
+    {
+      "year": 2013,
+      "source": "cache",
+      "ok": true,
+      "url": null,
+      "error": null
+    },
+    {
+      "year": 2014,
+      "source": "cache",
+      "ok": true,
+      "url": null,
+      "error": null
+    },
+    {
+      "year": 2015,
+      "source": "cache",
+      "ok": true,
+      "url": null,
+      "error": null
+    },
+    {
+      "year": 2016,
+      "source": "cache",
+      "ok": true,
+      "url": null,
+      "error": null
+    },
+    {
+      "year": 2017,
+      "source": "cache",
+      "ok": true,
+      "url": null,
+      "error": null
+    },
+    {
+      "year": 2018,
+      "source": "cache",
+      "ok": true,
+      "url": null,
+      "error": null
+    },
+    {
+      "year": 2019,
+      "source": "cache",
+      "ok": true,
+      "url": null,
+      "error": null
+    },
+    {
+      "year": 2020,
+      "source": "cache",
+      "ok": true,
+      "url": null,
+      "error": null
+    },
+    {
+      "year": 2021,
+      "source": "cache",
+      "ok": true,
+      "url": null,
+      "error": null
+    },
+    {
+      "year": 2022,
+      "source": "cache",
+      "ok": true,
+      "url": null,
+      "error": null
+    },
+    {
+      "year": 2023,
+      "source": "cache",
+      "ok": true,
+      "url": null,
+      "error": null
+    },
+    {
+      "year": 2024,
+      "source": "cache",
+      "ok": true,
+      "url": null,
+      "error": null
+    },
+    {
+      "year": 2025,
+      "source": "cache",
+      "ok": true,
+      "url": null,
+      "error": null
+    },
+    {
+      "year": 2026,
+      "source": "valuebetennis",
+      "ok": true,
+      "url": "https://www.valuebetennis.com/datasets/valuebetennis-matchs-2026.csv",
+      "latest_match_date": "2026-09-08",
+      "rows": 1851,
+      "primary_error": "HTTP Error 503: Service Temporarily Unavailable",
+      "error": null
+    }
+  ],
+  "healthy": true,
+  "current_year_source": "valuebetennis",
+  "current_year_url": "https://www.valuebetennis.com/datasets/valuebetennis-matchs-2026.csv",
+  "current_year_latest_match_date": "2026-09-08"
+}

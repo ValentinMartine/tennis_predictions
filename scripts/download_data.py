@@ -21,37 +21,55 @@ import pandas as pd
 
 ROOT = Path(__file__).resolve().parents[1]
 DATA = ROOT / "data"
-SOURCE_STATUS = DATA / "source_status.json"
 FIRST_SEASON = 2000
-URL = "http://www.tennis-data.co.uk/{y}/{y}.xlsx"
 VALUEBETENNIS_URL = "https://www.valuebetennis.com/datasets/valuebetennis-matchs-{y}.csv"
 VALUEBETENNIS_REFERER = "https://www.valuebetennis.com/donnees.htm"
-SACKMANN_URLS = (
-    "https://raw.githubusercontent.com/JeffSackmann/tennis_atp/master/atp_matches_{y}.csv",
-    "https://raw.githubusercontent.com/azhou5849/tennis-atp-sackmann-data/master/atp_matches_{y}.csv",
-    "https://raw.githubusercontent.com/beta2k/tennis_atp/master/atp_matches_{y}.csv",
-    "https://raw.githubusercontent.com/FerrisPhilippi/tennis_atp_data/master/atp_matches_{y}.csv",
-    "https://raw.githubusercontent.com/aadvikchaturvedi/tennis_atp_dataset/master/atp_matches_{y}.csv",
-    "https://raw.githubusercontent.com/migumax/tennis_atp/master/{y}.csv",
-)
+
+# Un circuit = un préfixe de fichier, une source primaire et une liste de miroirs au
+# format Sackmann. Le reste du pipeline est identique pour l'ATP et la WTA.
+TOURS = {
+    "atp": {
+        "primary": "http://www.tennis-data.co.uk/{y}/{y}.xlsx",
+        "genre": "atp",
+        "mirrors": (
+            "https://raw.githubusercontent.com/JeffSackmann/tennis_atp/master/atp_matches_{y}.csv",
+            "https://raw.githubusercontent.com/azhou5849/tennis-atp-sackmann-data/master/atp_matches_{y}.csv",
+            "https://raw.githubusercontent.com/beta2k/tennis_atp/master/atp_matches_{y}.csv",
+            "https://raw.githubusercontent.com/FerrisPhilippi/tennis_atp_data/master/atp_matches_{y}.csv",
+            "https://raw.githubusercontent.com/aadvikchaturvedi/tennis_atp_dataset/master/atp_matches_{y}.csv",
+            "https://raw.githubusercontent.com/migumax/tennis_atp/master/{y}.csv",
+        ),
+    },
+    "wta": {
+        "primary": "http://www.tennis-data.co.uk/{y}w/{y}.xlsx",
+        "genre": "wta",
+        "mirrors": (
+            "https://raw.githubusercontent.com/JeffSackmann/tennis_wta/master/wta_matches_{y}.csv",
+            "https://raw.githubusercontent.com/azhou5849/tennis-wta-sackmann-data/master/wta_matches_{y}.csv",
+        ),
+    },
+}
 SHORT_NAME_RE = re.compile(r"^(.+?)\s+((?:[A-Z]\.){1,3})$")
 # Périmètre de tennis-data.co.uk : tableau final des épreuves du circuit principal.
 # Ni Challenger, ni ITF, ni Coupe Davis, ni qualifications.
-MAIN_TOUR_SERIES = frozenset({"Grand Slam", "Masters 1000", "ATP", "Tour Finals"})
+MAIN_TOUR_SERIES = frozenset({
+    "Grand Slam", "Masters 1000", "ATP", "Tour Finals",
+    "WTA 1000", "WTA 500", "WTA 250",
+})
 QUALIFYING_ROUNDS = frozenset({"Qualifying 1", "Qualifying 2", "Qualifying 3"})
 MAX_ATTEMPTS = 4
 RETRY_DELAYS_SECONDS = (2, 5, 10)
 CURRENT_YEAR_MAX_STALENESS_DAYS = 3
 
 
-def download_with_retries(year: int, destination: Path, attempts: int = MAX_ATTEMPTS) -> None:
+def download_with_retries(year: int, destination: Path, tour: str = "atp", attempts: int = MAX_ATTEMPTS) -> None:
     """Download one tennis-data season with retries and atomic replacement."""
     tmp = destination.with_suffix(".xlsx.tmp")
     last_error: Exception | None = None
 
     for attempt in range(1, attempts + 1):
         try:
-            with urllib.request.urlopen(URL.format(y=year), timeout=30) as response:
+            with urllib.request.urlopen(TOURS[tour]["primary"].format(y=year), timeout=30) as response:
                 with tmp.open("wb") as handle:
                     shutil.copyfileobj(response, handle)
             tmp.replace(destination)
@@ -90,7 +108,7 @@ def _season_names(path: Path) -> list[str]:
     return _SEASON_NAMES_CACHE[path]
 
 
-def known_surnames(exclude_year: int | None = None) -> dict[str, dict[str, str]]:
+def known_surnames(exclude_year: int | None = None, tour: str = "atp") -> dict[str, dict[str, str]]:
     """Index {clé de nom de famille -> {initiales -> nom court connu}} des saisons en place.
 
     tennis-data.co.uk écrit « Sinner J. », Sackmann et Valuebetennis « Jannik Sinner ».
@@ -100,8 +118,8 @@ def known_surnames(exclude_year: int | None = None) -> dict[str, dict[str, str]]
     d'un run précédent se réinjecte dans l'index et se perpétue.
     """
     index: dict[str, dict[str, str]] = {}
-    for path in sorted(DATA.glob("atp_*.xlsx")):
-        if exclude_year is not None and path.stem == f"atp_{exclude_year}":
+    for path in sorted(DATA.glob(f"{tour}_*.xlsx")):
+        if exclude_year is not None and path.stem == f"{tour}_{exclude_year}":
             continue
         for name in _season_names(path):
             match = SHORT_NAME_RE.match(name)
@@ -137,16 +155,22 @@ def _first_known_surname(known: dict[str, str]) -> str:
     return SHORT_NAME_RE.match(sample).group(1).strip()
 
 
-def series_from_sackmann_level(level: object) -> str:
+SACKMANN_LEVELS = {
+    "atp": {"G": "Grand Slam", "M": "Masters 1000", "F": "Tour Finals", "A": "ATP", "D": "Davis Cup"},
+    # Nomenclature WTA : PM = Premier Mandatory (équivalent Masters 1000), P = Premier,
+    # I = International, T1..T5 = ancienne échelle Tier, D = Fed Cup / BJK Cup.
+    "wta": {
+        "G": "Grand Slam", "PM": "WTA 1000", "P": "WTA 500", "I": "WTA 250",
+        "F": "Tour Finals", "T1": "WTA 1000", "T2": "WTA 500", "T3": "WTA 250",
+        "T4": "WTA 250", "T5": "WTA 250", "D": "Fed Cup",
+    },
+}
+
+
+def series_from_sackmann_level(level: object, tour: str = "atp") -> str:
     """Map Sackmann tournament levels to tennis-data style labels."""
-    mapping = {
-        "G": "Grand Slam",
-        "M": "Masters 1000",
-        "F": "Tour Finals",
-        "A": "ATP",
-        "D": "Davis Cup",
-    }
-    return mapping.get(str(level or "").strip(), "ATP")
+    mapping = SACKMANN_LEVELS[tour]
+    return mapping.get(str(level or "").strip(), "ATP" if tour == "atp" else "WTA 250")
 
 
 def score_columns(score: object) -> dict[str, int | None]:
@@ -191,8 +215,13 @@ def valuebetennis_surface(surface: object) -> str:
     return mapping.get(str(surface or "").strip().lower(), str(surface or ""))
 
 
-def valuebetennis_series(category: object) -> str:
+def valuebetennis_series(category: object, tour: str = "atp") -> str:
     """Map Valuebetennis categories to tennis-data style series labels."""
+    if tour == "wta":
+        return {
+            "grand chelem": "Grand Slam", "masters": "WTA 1000", "main tour": "WTA 250",
+            "challenger": "Challenger", "itf": "ITF", "coupe davis / bjk cup": "Fed Cup",
+        }.get(str(category or "").strip().lower(), "WTA 250")
     mapping = {
         "grand chelem": "Grand Slam",
         "masters": "Masters 1000",
@@ -232,12 +261,24 @@ def valuebetennis_round(round_code: object) -> str:
     return VALUEBETENNIS_ROUNDS.get(value, f"Round {value}")
 
 
+def is_finished_set(a: int, b: int) -> bool:
+    """Un set terminé : 6-0 à 6-4, 7-5, 7-6, ou un super tie-break à 10 et plus."""
+    high, low = max(a, b), min(a, b)
+    return high >= 10 or (high == 6 and low <= 4) or (high == 7 and low in (5, 6))
+
+
 def score_columns_from_valuebetennis(score: object, winner_is_player1: bool) -> dict[str, int | None]:
-    """Extract set scores when Valuebetennis scores are expressed player1-player2."""
+    """Extract set scores when Valuebetennis scores are expressed player1-player2.
+
+    La source tronque le dernier set d'un match sur huit : « 5-7 3-6 7-5 6-3 5-5 » pour un
+    match gagné en cinq. Les sets inachevés sont écartés du décompte et le match est marqué
+    partiel, sinon le score affiché contredit le vainqueur annoncé.
+    """
     values = {f"{side}{index}": None for index in range(1, 6) for side in ("W", "L")}
     winner_sets = 0
     loser_sets = 0
     complete_sets = 0
+    partial = False
     for index, token in enumerate(str(score or "").split()[:5], start=1):
         clean = token.split("(", 1)[0]
         if "-" not in clean:
@@ -248,7 +289,8 @@ def score_columns_from_valuebetennis(score: object, winner_is_player1: bool) -> 
             p2_games = int(player2_games)
         except ValueError:
             continue
-        if p1_games == p2_games:
+        if not is_finished_set(p1_games, p2_games):
+            partial = True
             continue
         w_games, l_games = (p1_games, p2_games) if winner_is_player1 else (p2_games, p1_games)
         values[f"W{index}"] = w_games
@@ -261,10 +303,11 @@ def score_columns_from_valuebetennis(score: object, winner_is_player1: bool) -> 
     values["Wsets"] = winner_sets or None
     values["Lsets"] = loser_sets or None
     values["_complete_sets"] = complete_sets
+    values["_partial"] = partial
     return values
 
 
-def download_valuebetennis_fallback(year: int, destination: Path) -> str:
+def download_valuebetennis_fallback(year: int, destination: Path, tour: str = "atp") -> str:
     """Build a tennis-data compatible Excel file from the fresh Valuebetennis CSV."""
     url = VALUEBETENNIS_URL.format(y=year)
     request = urllib.request.Request(
@@ -277,15 +320,15 @@ def download_valuebetennis_fallback(year: int, destination: Path) -> str:
     with urllib.request.urlopen(request, timeout=30) as response:
         raw = pd.read_csv(response, sep=";")
 
-    raw = raw[raw["genre"].astype(str).str.lower().eq("atp")].copy()
+    raw = raw[raw["genre"].astype(str).str.lower().eq(TOURS[tour]["genre"])].copy()
     # Le fichier Valuebetennis descend jusqu'aux ITF. La source primaire couvre le seul
     # main tour : garder le même périmètre, sinon les métriques ne sont plus comparables
     # et le classement Elo mélange des circuits sans rapport.
-    raw = raw[raw["categorie"].map(valuebetennis_series).isin(MAIN_TOUR_SERIES)].copy()
+    raw = raw[raw["categorie"].map(lambda c: valuebetennis_series(c, tour)).isin(MAIN_TOUR_SERIES)].copy()
     raw["Date"] = pd.to_datetime(raw["date"], errors="coerce", utc=True).dt.tz_localize(None)
     raw = raw.dropna(subset=["Date", "joueur1", "joueur2", "vainqueur_id", "score"])
 
-    surnames = known_surnames(exclude_year=year)
+    surnames = known_surnames(exclude_year=year, tour=tour)
     rows = []
     for _, match in raw.iterrows():
         winner_is_player1 = str(match["vainqueur_id"]) == str(match["joueur1_id"])
@@ -295,7 +338,10 @@ def download_valuebetennis_fallback(year: int, destination: Path) -> str:
         if round_label in QUALIFYING_ROUNDS:
             continue
         score_frame = score_columns_from_valuebetennis(match["score"], winner_is_player1)
-        if score_frame.pop("_complete_sets", 0) < 2:
+        partial_score = score_frame.pop("_partial", False)
+        # Un abandon au premier set reste un résultat : il suffit d'un set terminé pour
+        # que le match compte. Sans set exploitable, la ligne n'apporte rien.
+        if score_frame.pop("_complete_sets", 0) < 1:
             continue
         avg_w = match["cote1_cloture"] if winner_is_player1 else match["cote2_cloture"]
         avg_l = match["cote2_cloture"] if winner_is_player1 else match["cote1_cloture"]
@@ -304,11 +350,12 @@ def download_valuebetennis_fallback(year: int, destination: Path) -> str:
             "Location": match["tournoi"],
             "Tournament": match["tournoi"],
             "Date": match["Date"],
-            "Series": valuebetennis_series(match["categorie"]),
+            "Series": valuebetennis_series(match["categorie"], tour),
             "Court": "Outdoor",
             "Surface": valuebetennis_surface(match["surface"]),
             "Round": round_label,
-            "Best of": 5 if valuebetennis_series(match["categorie"]) == "Grand Slam" else 3,
+            # La WTA joue au meilleur des 3 sets partout, Grands Chelems compris.
+            "Best of": 5 if (tour == "atp" and valuebetennis_series(match["categorie"], tour) == "Grand Slam") else 3,
             "Winner": winner,
             "Loser": loser,
             "WRank": pd.NA,
@@ -318,19 +365,20 @@ def download_valuebetennis_fallback(year: int, destination: Path) -> str:
             "AvgW": avg_w,
             "AvgL": avg_l,
             "Comment": "Completed",
+            "ScoreStatus": "partial" if partial_score else "complete",
             **score_frame,
         })
 
     if not rows:
-        raise RuntimeError(f"No completed ATP main-tour rows in Valuebetennis file for {year}")
+        raise RuntimeError(f"No completed {tour.upper()} main-tour rows in Valuebetennis file for {year}")
     pd.DataFrame(rows).to_excel(destination, index=False)
     return url
 
 
-def download_sackmann_fallback(year: int, destination: Path) -> str:
-    """Build a tennis-data compatible Excel file from a public ATP CSV mirror."""
+def download_sackmann_fallback(year: int, destination: Path, tour: str = "atp") -> str:
+    """Build a tennis-data compatible Excel file from a public CSV mirror."""
     last_error: Exception | None = None
-    for url_template in SACKMANN_URLS:
+    for url_template in TOURS[tour]["mirrors"]:
         url = url_template.format(y=year)
         try:
             raw = pd.read_csv(url)
@@ -340,16 +388,16 @@ def download_sackmann_fallback(year: int, destination: Path) -> str:
     else:
         if last_error is not None:
             raise last_error
-        raise RuntimeError(f"No Sackmann fallback URL configured for {year}")
+        raise RuntimeError(f"No Sackmann fallback URL configured for {tour} {year}")
 
-    surnames = known_surnames(exclude_year=year)
+    surnames = known_surnames(exclude_year=year, tour=tour)
     converted = pd.DataFrame(
         {
             "ATP": raw.get("tourney_id", ""),
             "Location": raw.get("tourney_name", ""),
             "Tournament": raw.get("tourney_name", ""),
             "Date": pd.to_datetime(raw["tourney_date"].astype(str), format="%Y%m%d", errors="coerce"),
-            "Series": raw.get("tourney_level", "").map(series_from_sackmann_level),
+            "Series": raw.get("tourney_level", "").map(lambda lv: series_from_sackmann_level(lv, tour)),
             "Court": "Outdoor",
             "Surface": raw.get("surface", ""),
             "Round": raw.get("round", ""),
@@ -370,19 +418,26 @@ def download_sackmann_fallback(year: int, destination: Path) -> str:
     score_frame = pd.DataFrame([score_columns(score) for score in raw.get("score", "")])
     converted = pd.concat([converted, score_frame], axis=1)
     converted = converted.dropna(subset=["Date", "Winner", "Loser"])
+    # Même périmètre que le secours Valuebetennis : ni Coupe Davis, ni BJK Cup.
+    converted = converted[converted["Series"].isin(MAIN_TOUR_SERIES)]
     converted.to_excel(destination, index=False)
     return url
 
 
-def write_source_status(records: list[dict], healthy: bool, current: int) -> None:
+def status_path(tour: str) -> Path:
+    return DATA / ("source_status.json" if tour == "atp" else f"source_status_{tour}.json")
+
+
+def write_source_status(records: list[dict], healthy: bool, current: int, tour: str = "atp") -> None:
     """Persist source health so the site can disclose stale or fallback data."""
-    SOURCE_STATUS.write_text(json.dumps({
+    status_path(tour).write_text(json.dumps({
         "checked_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+        "tour": tour,
         "primary_source": "tennis-data.co.uk",
         "fresh_csv_fallback": "Valuebetennis",
         "fresh_csv_fallback_url": VALUEBETENNIS_REFERER,
         "current_year_max_staleness_days": CURRENT_YEAR_MAX_STALENESS_DAYS,
-        "fallback_sources": list(SACKMANN_URLS),
+        "fallback_sources": list(TOURS[tour]["mirrors"]),
         "records": records,
         "healthy": healthy,
         "current_year_source": next((record["source"] for record in records if record["year"] == current), None),
@@ -394,15 +449,15 @@ def write_source_status(records: list[dict], healthy: bool, current: int) -> Non
     }, ensure_ascii=False, indent=2), encoding="utf-8")
 
 
-def download_fallback(year: int, destination: Path) -> tuple[str, str, str | None, int | None]:
+def download_fallback(year: int, destination: Path, tour: str = "atp") -> tuple[str, str, str | None, int | None]:
     """Download the freshest available public fallback and return source metadata."""
     try:
-        url = download_valuebetennis_fallback(year, destination)
+        url = download_valuebetennis_fallback(year, destination, tour)
         converted = pd.read_excel(destination)
         latest = pd.to_datetime(converted["Date"]).max()
         return "valuebetennis", url, latest.date().isoformat() if pd.notna(latest) else None, len(converted)
     except Exception:  # noqa: BLE001
-        sackmann_url = download_sackmann_fallback(year, destination)
+        sackmann_url = download_sackmann_fallback(year, destination, tour)
         converted = pd.read_excel(destination)
         latest = pd.to_datetime(converted["Date"]).max()
         return (
@@ -413,20 +468,24 @@ def download_fallback(year: int, destination: Path) -> tuple[str, str, str | Non
         )
 
 
-def main() -> int:
+def main(argv: list[str] | None = None) -> int:
+    tour = (argv or sys.argv[1:] or ["atp"])[0].lower()
+    if tour not in TOURS:
+        print(f"circuit inconnu : {tour} (attendu : {', '.join(TOURS)})", file=sys.stderr)
+        return 2
     DATA.mkdir(exist_ok=True)
     current = date.today().year
     records = []
     primary_failures = 0
     for year in range(FIRST_SEASON, current + 1):
-        out = DATA / f"atp_{year}.xlsx"
+        out = DATA / f"{tour}_{year}.xlsx"
         if out.exists() and year < current:
             records.append({"year": year, "source": "cache", "ok": True, "url": None, "error": None})
             continue
         try:
             # Chaque saison retente la source primaire, mais sans repayer quatre essais
             # avec pauses quand elle est visiblement hors service.
-            download_with_retries(year, out, 1 if primary_failures >= 3 else MAX_ATTEMPTS)
+            download_with_retries(year, out, tour, 1 if primary_failures >= 3 else MAX_ATTEMPTS)
             primary = pd.read_excel(out)
             latest = pd.to_datetime(primary["Date"]).max()
             if (
@@ -437,12 +496,12 @@ def main() -> int:
                 raise RuntimeError(
                     f"tennis-data.co.uk current-year file stale: latest match {latest.date().isoformat()}"
                 )
-            print(f"  atp_{year}.xlsx OK")
+            print(f"  {tour}_{year}.xlsx OK")
             records.append({
                 "year": year,
                 "source": "tennis-data.co.uk",
                 "ok": True,
-                "url": URL.format(y=year),
+                "url": TOURS[tour]["primary"].format(y=year),
                 "latest_match_date": latest.date().isoformat() if pd.notna(latest) else None,
                 "rows": int(len(primary)),
                 "error": None,
@@ -451,10 +510,10 @@ def main() -> int:
             # Un 503 ponctuel sur 2000 ne doit pas basculer les 26 saisons suivantes
             # sur un fallback dépourvu de classements et de cotes.
             primary_failures += 1
-            print(f"  atp_{year}.xlsx ECHEC : {exc}", file=sys.stderr)
+            print(f"  {tour}_{year}.xlsx ECHEC : {exc}", file=sys.stderr)
             try:
-                fallback_source, fallback_url, latest_date, rows = download_fallback(year, out)
-                print(f"  atp_{year}.xlsx OK via {fallback_source}")
+                fallback_source, fallback_url, latest_date, rows = download_fallback(year, out, tour)
+                print(f"  {tour}_{year}.xlsx OK via {fallback_source}")
                 records.append({
                     "year": year,
                     "source": fallback_source,
@@ -466,7 +525,7 @@ def main() -> int:
                     "error": None,
                 })
             except Exception as fallback_exc:  # noqa: BLE001
-                print(f"  atp_{year}.xlsx fallback ECHEC : {fallback_exc}", file=sys.stderr)
+                print(f"  {tour}_{year}.xlsx fallback ECHEC : {fallback_exc}", file=sys.stderr)
                 if year < current or not out.exists():
                     records.append({
                         "year": year,
@@ -476,9 +535,9 @@ def main() -> int:
                         "primary_error": str(exc),
                         "error": str(fallback_exc),
                     })
-                    write_source_status(records, healthy=False, current=current)
+                    write_source_status(records, healthy=False, current=current, tour=tour)
                     return 1
-                print(f"  atp_{year}.xlsx conserve depuis le fichier existant", file=sys.stderr)
+                print(f"  {tour}_{year}.xlsx conserve depuis le fichier existant", file=sys.stderr)
                 records.append({
                     "year": year,
                     "source": "cache",
@@ -489,7 +548,7 @@ def main() -> int:
                     "error": None,
                 })
 
-    write_source_status(records, healthy=all(record["ok"] for record in records), current=current)
+    write_source_status(records, healthy=all(record["ok"] for record in records), current=current, tour=tour)
     return 0
 
 
