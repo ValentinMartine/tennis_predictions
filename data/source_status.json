@@ -1,7 +1,11 @@
 {
-  "checked_at": "2026-09-09T11:17:03+00:00",
+  "checked_at": "2026-09-09T13:19:32+00:00",
   "primary_source": "tennis-data.co.uk",
+  "fresh_csv_fallback": "Valuebetennis",
+  "fresh_csv_fallback_url": "https://www.valuebetennis.com/donnees.htm",
+  "current_year_max_staleness_days": 3,
   "fallback_sources": [
+    "https://raw.githubusercontent.com/JeffSackmann/tennis_atp/master/atp_matches_{y}.csv",
     "https://raw.githubusercontent.com/azhou5849/tennis-atp-sackmann-data/master/atp_matches_{y}.csv",
     "https://raw.githubusercontent.com/beta2k/tennis_atp/master/atp_matches_{y}.csv",
     "https://raw.githubusercontent.com/FerrisPhilippi/tennis_atp_data/master/atp_matches_{y}.csv",
@@ -11,196 +15,199 @@
   "records": [
     {
       "year": 2000,
-      "source": "sackmann-compatible-fallback",
+      "source": "cache",
       "ok": true,
-      "url": "https://raw.githubusercontent.com/azhou5849/tennis-atp-sackmann-data/master/atp_matches_2000.csv",
-      "primary_error": "HTTP Error 503: Service Temporarily Unavailable",
+      "url": null,
       "error": null
     },
     {
       "year": 2001,
-      "source": "sackmann-compatible-fallback",
+      "source": "cache",
       "ok": true,
-      "url": "https://raw.githubusercontent.com/azhou5849/tennis-atp-sackmann-data/master/atp_matches_2001.csv",
+      "url": null,
       "error": null
     },
     {
       "year": 2002,
-      "source": "sackmann-compatible-fallback",
+      "source": "cache",
       "ok": true,
-      "url": "https://raw.githubusercontent.com/azhou5849/tennis-atp-sackmann-data/master/atp_matches_2002.csv",
+      "url": null,
       "error": null
     },
     {
       "year": 2003,
-      "source": "sackmann-compatible-fallback",
+      "source": "cache",
       "ok": true,
-      "url": "https://raw.githubusercontent.com/azhou5849/tennis-atp-sackmann-data/master/atp_matches_2003.csv",
+      "url": null,
       "error": null
     },
     {
       "year": 2004,
-      "source": "sackmann-compatible-fallback",
+      "source": "cache",
       "ok": true,
-      "url": "https://raw.githubusercontent.com/azhou5849/tennis-atp-sackmann-data/master/atp_matches_2004.csv",
+      "url": null,
       "error": null
     },
     {
       "year": 2005,
-      "source": "sackmann-compatible-fallback",
+      "source": "cache",
       "ok": true,
-      "url": "https://raw.githubusercontent.com/azhou5849/tennis-atp-sackmann-data/master/atp_matches_2005.csv",
+      "url": null,
       "error": null
     },
     {
       "year": 2006,
-      "source": "sackmann-compatible-fallback",
+      "source": "cache",
       "ok": true,
-      "url": "https://raw.githubusercontent.com/azhou5849/tennis-atp-sackmann-data/master/atp_matches_2006.csv",
+      "url": null,
       "error": null
     },
     {
       "year": 2007,
-      "source": "sackmann-compatible-fallback",
+      "source": "cache",
       "ok": true,
-      "url": "https://raw.githubusercontent.com/azhou5849/tennis-atp-sackmann-data/master/atp_matches_2007.csv",
+      "url": null,
       "error": null
     },
     {
       "year": 2008,
-      "source": "sackmann-compatible-fallback",
+      "source": "cache",
       "ok": true,
-      "url": "https://raw.githubusercontent.com/azhou5849/tennis-atp-sackmann-data/master/atp_matches_2008.csv",
+      "url": null,
       "error": null
     },
     {
       "year": 2009,
-      "source": "sackmann-compatible-fallback",
+      "source": "cache",
       "ok": true,
-      "url": "https://raw.githubusercontent.com/azhou5849/tennis-atp-sackmann-data/master/atp_matches_2009.csv",
+      "url": null,
       "error": null
     },
     {
       "year": 2010,
-      "source": "sackmann-compatible-fallback",
+      "source": "cache",
       "ok": true,
-      "url": "https://raw.githubusercontent.com/azhou5849/tennis-atp-sackmann-data/master/atp_matches_2010.csv",
+      "url": null,
       "error": null
     },
     {
       "year": 2011,
-      "source": "sackmann-compatible-fallback",
+      "source": "cache",
       "ok": true,
-      "url": "https://raw.githubusercontent.com/azhou5849/tennis-atp-sackmann-data/master/atp_matches_2011.csv",
+      "url": null,
       "error": null
     },
     {
       "year": 2012,
-      "source": "sackmann-compatible-fallback",
+      "source": "cache",
       "ok": true,
-      "url": "https://raw.githubusercontent.com/azhou5849/tennis-atp-sackmann-data/master/atp_matches_2012.csv",
+      "url": null,
       "error": null
     },
     {
       "year": 2013,
-      "source": "sackmann-compatible-fallback",
+      "source": "cache",
       "ok": true,
-      "url": "https://raw.githubusercontent.com/azhou5849/tennis-atp-sackmann-data/master/atp_matches_2013.csv",
+      "url": null,
       "error": null
     },
     {
       "year": 2014,
-      "source": "sackmann-compatible-fallback",
+      "source": "cache",
       "ok": true,
-      "url": "https://raw.githubusercontent.com/azhou5849/tennis-atp-sackmann-data/master/atp_matches_2014.csv",
+      "url": null,
       "error": null
     },
     {
       "year": 2015,
-      "source": "sackmann-compatible-fallback",
+      "source": "cache",
       "ok": true,
-      "url": "https://raw.githubusercontent.com/azhou5849/tennis-atp-sackmann-data/master/atp_matches_2015.csv",
+      "url": null,
       "error": null
     },
     {
       "year": 2016,
-      "source": "sackmann-compatible-fallback",
+      "source": "cache",
       "ok": true,
-      "url": "https://raw.githubusercontent.com/azhou5849/tennis-atp-sackmann-data/master/atp_matches_2016.csv",
+      "url": null,
       "error": null
     },
     {
       "year": 2017,
-      "source": "sackmann-compatible-fallback",
+      "source": "cache",
       "ok": true,
-      "url": "https://raw.githubusercontent.com/azhou5849/tennis-atp-sackmann-data/master/atp_matches_2017.csv",
+      "url": null,
       "error": null
     },
     {
       "year": 2018,
-      "source": "sackmann-compatible-fallback",
+      "source": "cache",
       "ok": true,
-      "url": "https://raw.githubusercontent.com/azhou5849/tennis-atp-sackmann-data/master/atp_matches_2018.csv",
+      "url": null,
       "error": null
     },
     {
       "year": 2019,
-      "source": "sackmann-compatible-fallback",
+      "source": "cache",
       "ok": true,
-      "url": "https://raw.githubusercontent.com/azhou5849/tennis-atp-sackmann-data/master/atp_matches_2019.csv",
+      "url": null,
       "error": null
     },
     {
       "year": 2020,
-      "source": "sackmann-compatible-fallback",
+      "source": "cache",
       "ok": true,
-      "url": "https://raw.githubusercontent.com/azhou5849/tennis-atp-sackmann-data/master/atp_matches_2020.csv",
+      "url": null,
       "error": null
     },
     {
       "year": 2021,
-      "source": "sackmann-compatible-fallback",
+      "source": "cache",
       "ok": true,
-      "url": "https://raw.githubusercontent.com/azhou5849/tennis-atp-sackmann-data/master/atp_matches_2021.csv",
+      "url": null,
       "error": null
     },
     {
       "year": 2022,
-      "source": "sackmann-compatible-fallback",
+      "source": "cache",
       "ok": true,
-      "url": "https://raw.githubusercontent.com/azhou5849/tennis-atp-sackmann-data/master/atp_matches_2022.csv",
+      "url": null,
       "error": null
     },
     {
       "year": 2023,
-      "source": "sackmann-compatible-fallback",
+      "source": "cache",
       "ok": true,
-      "url": "https://raw.githubusercontent.com/azhou5849/tennis-atp-sackmann-data/master/atp_matches_2023.csv",
+      "url": null,
       "error": null
     },
     {
       "year": 2024,
-      "source": "sackmann-compatible-fallback",
+      "source": "cache",
       "ok": true,
-      "url": "https://raw.githubusercontent.com/FerrisPhilippi/tennis_atp_data/master/atp_matches_2024.csv",
+      "url": null,
       "error": null
     },
     {
       "year": 2025,
-      "source": "sackmann-compatible-fallback",
+      "source": "cache",
       "ok": true,
-      "url": "https://raw.githubusercontent.com/migumax/tennis_atp/master/2025.csv",
+      "url": null,
       "error": null
     },
     {
       "year": 2026,
-      "source": "sackmann-compatible-fallback",
+      "source": "valuebetennis",
       "ok": true,
-      "url": "https://raw.githubusercontent.com/migumax/tennis_atp/master/2026.csv",
+      "url": "https://www.valuebetennis.com/datasets/valuebetennis-matchs-2026.csv",
+      "latest_match_date": "2026-09-09",
+      "rows": 23419,
+      "primary_error": "HTTP Error 503: Service Temporarily Unavailable",
       "error": null
     }
   ],
   "healthy": true,
-  "current_year_source": "sackmann-compatible-fallback",
-  "current_year_url": "https://raw.githubusercontent.com/migumax/tennis_atp/master/2026.csv"
+  "current_year_source": "valuebetennis",
+  "current_year_url": "https://www.valuebetennis.com/datasets/valuebetennis-matchs-2026.csv",
+  "current_year_latest_match_date": "2026-09-09"
 }

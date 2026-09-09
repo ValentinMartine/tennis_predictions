@@ -47,6 +47,8 @@ def load_matches() -> pd.DataFrame:
     patch = DATA / "results_patch.csv"
     if patch.exists():
         extra = pd.read_csv(patch, parse_dates=["Date"])
+        last_covered = allm["Date"].max().date()
+        extra = extra[extra["Date"].dt.date > last_covered]
         key = set(zip(allm["Date"].dt.date.astype(str), allm["Winner"], allm["Loser"]))
         rows = [r for _, r in extra.iterrows()
                 if (str(r["Date"].date()), r["Winner"], r["Loser"]) not in key]
