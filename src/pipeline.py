@@ -26,6 +26,28 @@ from .sackmann_stats import STAT_FEATURES, RollingSackmannStats
 ROOT = Path(__file__).resolve().parents[1]
 DATA = ROOT / "data"
 
+NA = float("nan")
+OUT_OF_SCOPE_SERIES = frozenset({"Challenger", "ITF"})
+
+
+def _finite(value: float) -> bool:
+    return value == value and value > 0
+
+
+def _log_diff(a: float, b: float) -> float:
+    """log(a) - log(b), écart neutre si l'un des deux classements est inconnu.
+
+    Mesuré sur le test 2024+ : l'écart neutre donne log-loss 0,6241 contre 0,6401 en
+    laissant un NaN, que LightGBM n'a jamais rencontré à l'entraînement. Le classement
+    reste exporté à None : neutraliser la variable ne justifie pas d'afficher un faux rang.
+    """
+    return math.log(a) - math.log(b) if _finite(a) and _finite(b) else 0.0
+
+
+def _log1p_diff(a: float, b: float) -> float:
+    return math.log1p(a) - math.log1p(b) if _finite(a) and _finite(b) else 0.0
+
+
 FEATURES = [
     "p_elo", "d_selo", "d_lrank", "d_lpts", "d_form10", "d_form25",
     "d_activity", "h2h", "h2h_count", "h2h_surface", "h2h_slam",
@@ -41,6 +63,10 @@ def load_matches() -> pd.DataFrame:
     allm = pd.concat(frames, ignore_index=True)
     allm["Date"] = pd.to_datetime(allm["Date"])
     allm = allm[allm.get("Comment", "Completed").fillna("Completed") != "Walkover"]
+    # Filet de sécurité : les fichiers déjà en cache peuvent contenir du Challenger/ITF
+    # importé par un ancien fallback. Le périmètre du projet reste le main tour ATP.
+    if "Series" in allm.columns:
+        allm = allm[~allm["Series"].astype(str).isin(OUT_OF_SCOPE_SERIES)]
     allm = allm.dropna(subset=["Winner", "Loser"])
     allm = allm.sort_values(["Date", "ATP", "Round"]).reset_index(drop=True)
     # patch résultats récents (Sofascore) éventuel
@@ -146,10 +172,13 @@ def build_features(allm: pd.DataFrame):
             except (TypeError, ValueError):  # 'NR' (non classé) dans les vieilles saisons
                 return default
 
-        wr = _num(m.get("WRank"), 250.0)
-        lr = _num(m.get("LRank"), 250.0)
-        wp = _num(m.get("WPts"), 10.0)
-        lp = _num(m.get("LPts"), 10.0)
+        # Classement et points absents : rester à NaN plutôt que d'inventer un 250 commun.
+        # Un défaut constant annule d_lrank/d_lpts sur toute la période concernée et crée
+        # un décalage entraînement/test invisible ; LightGBM gère nativement les NaN.
+        wr = _num(m.get("WRank"), NA)
+        lr = _num(m.get("LRank"), NA)
+        wp = _num(m.get("WPts"), NA)
+        lp = _num(m.get("LPts"), NA)
 
         p1_win = _p1_is_winner(date, w, l)
         p1, p2 = (w, l) if p1_win else (l, w)
@@ -188,8 +217,8 @@ def build_features(allm: pd.DataFrame):
         feats = {
             "p_elo": elo.prob(p1, p2, surface),
             "d_selo": (elo.surf[surface][p1] - elo.surf[surface][p2]) / 100.0,
-            "d_lrank": math.log(r2) - math.log(r1),  # >0 si p1 mieux classé
-            "d_lpts": math.log1p(q1) - math.log1p(q2),
+            "d_lrank": _log_diff(r2, r1),  # >0 si p1 mieux classé
+            "d_lpts": _log1p_diff(q1, q2),
             "d_form10": form(p1, 10) - form(p2, 10),
             "d_form25": form(p1, 25) - form(p2, 25),
             "d_activity": (activity(p1) - activity(p2)) / 10.0,

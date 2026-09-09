@@ -21,6 +21,15 @@ def _assert(condition: bool, message: str) -> None:
         raise AssertionError(message)
 
 
+# Périmètre du projet : main tour ATP. Un fallback qui rapatrie du Challenger ou de
+# l'ITF fausse les métriques et le classement sans lever d'erreur.
+# Deux vocabulaires coexistent : tennis-data.co.uk (ATP250/ATP500/Masters Cup) et
+# les sources de secours (ATP/Tour Finals).
+ALLOWED_SERIES = {
+    "Grand Slam", "Masters 1000", "Masters Cup", "Tour Finals", "ATP", "ATP250", "ATP500",
+}
+
+
 def validate_predictions(data: dict) -> None:
     required = {
         "generated_at", "source", "sackmann_stats_active", "n_matches", "last_match", "metrics",
@@ -65,6 +74,8 @@ def validate_predictions(data: dict) -> None:
         for key in ("serve_elo", "return_elo", "pressure_elo", "stat_elo"):
             value = player.get(key)
             _assert(value is None or 1000 <= value <= 2200, f"Invalid {key} for {player['player']}")
+    out_of_scope = {m.get("series") for m in data["recent_matches"]} - ALLOWED_SERIES
+    _assert(not out_of_scope, f"Series outside the ATP main tour: {sorted(out_of_scope)}")
     for match in data["recent_matches"]:
         pair = {match["winner"], match["loser"]}
         _assert(match.get("predicted_player") in pair, f"Prediction outside match pair: {match}")
@@ -91,9 +102,22 @@ def validate_history(data: dict) -> None:
         _assert(points == sorted(points, key=lambda p: p[0]), f"Unsorted points for {player.get('player')}")
 
 
+def validate_alignment(data: dict, history: dict) -> None:
+    """Le classement Elo doit couvrir le mois du dernier match exporté."""
+    last_month = str(data["last_match"])[:7]
+    _assert(last_month in history["months"],
+            f"History stops at {history['months'][-1]} while last match is {last_month}")
+    ranked = {p["player"] for p in history["ranking_players"]}
+    active = {p["player"] for p in data["elo_rankings"]}
+    _assert(active.issubset(ranked), "Active Elo players missing from the ranking history")
+
+
 def main() -> int:
-    validate_predictions(_load(PREDICTIONS))
-    validate_history(_load(HISTORY))
+    predictions = _load(PREDICTIONS)
+    history = _load(HISTORY)
+    validate_predictions(predictions)
+    validate_history(history)
+    validate_alignment(predictions, history)
     print("exports OK")
     return 0
 

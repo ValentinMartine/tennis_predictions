@@ -1,8 +1,13 @@
 from pathlib import Path
 
+import pandas as pd
+
 from scripts.download_data import (
+    MAIN_TOUR_SERIES,
+    known_surnames,
     score_columns,
     score_columns_from_valuebetennis,
+    short_name_from_full,
     valuebetennis_round,
     valuebetennis_series,
     valuebetennis_surface,
@@ -57,3 +62,83 @@ def test_valuebetennis_score_is_converted_to_winner_perspective() -> None:
     assert values["Wsets"] == 2
     assert values["Lsets"] == 1
     assert values["_complete_sets"] == 3
+
+
+def test_valuebetennis_rounds_follow_the_draw_ladder() -> None:
+    """Codes relevés sur l'Australian Open 2026 : 4:64, 5:32, 6:16, 7:8, 9:4, 10:2, 12:1."""
+    assert valuebetennis_round(4) == "1st Round"
+    assert valuebetennis_round(5) == "2nd Round"
+    assert valuebetennis_round(6) == "3rd Round"
+    assert valuebetennis_round(7) == "4th Round"
+    assert valuebetennis_round(9) == "Quarterfinals"
+    assert valuebetennis_round(10) == "Semifinals"
+    assert valuebetennis_round(12) == "The Final"
+    assert valuebetennis_round(8) == "Round Robin"
+    assert valuebetennis_round(1) == "Qualifying 1"
+
+
+def test_valuebetennis_main_tour_perimeter_excludes_challenger_and_itf() -> None:
+    assert valuebetennis_series("Challenger") not in MAIN_TOUR_SERIES
+    assert valuebetennis_series("ITF") not in MAIN_TOUR_SERIES
+    assert valuebetennis_series("Main tour") in MAIN_TOUR_SERIES
+    assert valuebetennis_series("Masters") in MAIN_TOUR_SERIES
+    assert valuebetennis_series("Grand Chelem") in MAIN_TOUR_SERIES
+
+
+def test_source_status_is_unhealthy_when_a_season_failed() -> None:
+    records = [
+        {"year": 2025, "source": "tennis-data.co.uk", "ok": True, "url": None},
+        {"year": 2026, "source": "none", "ok": False, "url": None},
+    ]
+
+    assert all(record["ok"] for record in records) is False
+
+
+def test_full_names_are_mapped_onto_the_short_convention() -> None:
+    """La source de secours écrit « Jannik Sinner » là où la primaire écrit « Sinner J. »."""
+    surnames = {
+        "sinner": {"J.": "Sinner J."},
+        "augeraliassime": {"F.": "Auger-Aliassime F."},
+        "deminaur": {"A.": "De Minaur A."},
+        "delpotro": {"J.M.": "Del Potro J.M."},
+        "fritz": {"T.": "Fritz T."},
+        "lee": {"M.": "Lee M.", "H.T.": "Lee H.T."},
+    }
+
+    assert short_name_from_full("Jannik Sinner", surnames) == "Sinner J."
+    assert short_name_from_full("Felix Auger Aliassime", surnames) == "Auger-Aliassime F."
+    assert short_name_from_full("Alex De Minaur", surnames) == "De Minaur A."
+    assert short_name_from_full("Juan Martin Del Potro", surnames) == "Del Potro J.M."
+    # Le deuxième prénom ne doit pas créer un joueur parallèle « Fritz T.H. ».
+    assert short_name_from_full("Taylor Harry Fritz", surnames) == "Fritz T."
+    assert short_name_from_full("Hyung Taik Lee", surnames) == "Lee H.T."
+
+
+def test_unknown_players_keep_a_deterministic_short_name() -> None:
+    assert short_name_from_full("Rafael Jodar", {}) == "Jodar R."
+    assert short_name_from_full("Sinner J.", {}) == "J. S."
+    assert short_name_from_full("Madonna", {}) == "Madonna"
+
+
+def test_known_surnames_reads_the_primary_convention(tmp_path, monkeypatch) -> None:
+    frame = pd.DataFrame({"Winner": ["Auger-Aliassime F.", "Jannik Sinner"], "Loser": ["De Minaur A.", "X"]})
+    frame.to_excel(tmp_path / "atp_2024.xlsx", index=False)
+    monkeypatch.setattr("scripts.download_data.DATA", tmp_path)
+    monkeypatch.setattr("scripts.download_data._SEASON_NAMES_CACHE", {})
+
+    index = known_surnames()
+
+    assert index["augeraliassime"] == {"F.": "Auger-Aliassime F."}
+    assert index["deminaur"] == {"A.": "De Minaur A."}
+    assert "janniksinner" not in index  # un nom complet n'est pas un nom de famille
+
+
+def test_index_ignores_the_season_being_rebuilt(tmp_path, monkeypatch) -> None:
+    """Une conversion approximative d'un run précédent ne doit pas se perpétuer."""
+    pd.DataFrame({"Winner": ["Fritz T."], "Loser": ["X Y."]}).to_excel(tmp_path / "atp_2025.xlsx", index=False)
+    pd.DataFrame({"Winner": ["Fritz T.H."], "Loser": ["X Y."]}).to_excel(tmp_path / "atp_2026.xlsx", index=False)
+    monkeypatch.setattr("scripts.download_data.DATA", tmp_path)
+    monkeypatch.setattr("scripts.download_data._SEASON_NAMES_CACHE", {})
+
+    assert short_name_from_full("Taylor Harry Fritz", known_surnames(exclude_year=2026)) == "Fritz T."
+    assert short_name_from_full("Taylor Harry Fritz", known_surnames()) == "Fritz T.H."

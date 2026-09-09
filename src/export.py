@@ -29,6 +29,15 @@ TEST_START = np.datetime64("2024-01-01")
 N_TOURNAMENTS = 4
 
 
+def _opt_int(value) -> int | None:
+    """Entier exportable, ou None quand le classement est inconnu (NaN, 0, vide)."""
+    try:
+        number = float(value)
+    except (TypeError, ValueError):
+        return None
+    return int(number) if number == number and number > 0 else None
+
+
 def _score_parts(match) -> list[tuple[int, int]]:
     parts = []
     for i in range(1, 6):
@@ -291,8 +300,8 @@ def main() -> int:
             "hard": round(elo.surf["Hard"][p], 1),
             "clay": round(elo.surf["Clay"][p], 1),
             "grass": round(elo.surf["Grass"][p], 1),
-            "rank": int(rank.get(p, 0)) or None,
-            "pts": int(pts.get(p, 0)) or None,
+            "rank": _opt_int(rank.get(p)),
+            "pts": _opt_int(pts.get(p)),
             "form10": f"{sum(d10)}-{len(d10) - sum(d10)}",
             "streak": streak,
             "matches": elo.count[p],
@@ -317,8 +326,8 @@ def main() -> int:
             "tournament": m["tournament"], "series": m["series"],
             "surface": m["surface"], "round": m["round"],
             "winner": m["winner"], "loser": m["loser"],
-            "wrank": int(m["wrank"]) if m["wrank"] else None,
-            "lrank": int(m["lrank"]) if m["lrank"] else None,
+            "wrank": _opt_int(m["wrank"]),
+            "lrank": _opt_int(m["lrank"]),
             "p_win": round(pw, 3),
             "predicted_player": predicted_player,
             "predicted_prob": round(float(predicted_prob), 3),
