@@ -1,21 +1,25 @@
-"""Télécharge les saisons ATP depuis tennis-data.co.uk (résultats + cotes, 2010-2026).
+"""Download ATP seasons from tennis-data.co.uk with GitHub CSV fallbacks.
 
-Même source de confiance que football-data.co.uk (même éditeur). Chaque saison est un
-fichier Excel ; on ne retélécharge que la saison courante (les saisons passées sont figées).
+The primary source keeps the historical betting odds. When it is unavailable, the
+pipeline falls back to Sackmann-compatible public CSV mirrors so the model can
+still refresh results and Elo features without pretending that market odds were
+available.
 """
 from __future__ import annotations
 
+import json
 import shutil
 import sys
 import time
 import urllib.request
-from datetime import date
+from datetime import date, datetime, timezone
 from pathlib import Path
 
 import pandas as pd
 
 ROOT = Path(__file__).resolve().parents[1]
 DATA = ROOT / "data"
+SOURCE_STATUS = DATA / "source_status.json"
 FIRST_SEASON = 2000
 URL = "http://www.tennis-data.co.uk/{y}/{y}.xlsx"
 SACKMANN_URLS = (
@@ -30,7 +34,7 @@ RETRY_DELAYS_SECONDS = (2, 5, 10)
 
 
 def download_with_retries(year: int, destination: Path) -> None:
-    """Download one season with retries, then atomically replace the target file."""
+    """Download one tennis-data season with retries and atomic replacement."""
     tmp = destination.with_suffix(".xlsx.tmp")
     last_error: Exception | None = None
 
@@ -53,7 +57,7 @@ def download_with_retries(year: int, destination: Path) -> None:
 
 
 def series_from_sackmann_level(level: object) -> str:
-    """Map Jeff Sackmann tournament levels to tennis-data style labels."""
+    """Map Sackmann tournament levels to tennis-data style labels."""
     mapping = {
         "G": "Grand Slam",
         "M": "Masters 1000",
@@ -65,7 +69,7 @@ def series_from_sackmann_level(level: object) -> str:
 
 
 def score_columns(score: object) -> dict[str, int | None]:
-    """Extract tennis-data compatible set columns from a Sackmann score."""
+    """Extract tennis-data compatible set columns from a Sackmann score string."""
     values: dict[str, int | None] = {}
     winner_sets = 0
     loser_sets = 0
@@ -95,12 +99,13 @@ def score_columns(score: object) -> dict[str, int | None]:
     return values
 
 
-def download_sackmann_fallback(year: int, destination: Path) -> None:
-    """Build a tennis-data compatible Excel file from Jeff Sackmann match CSVs."""
+def download_sackmann_fallback(year: int, destination: Path) -> str:
+    """Build a tennis-data compatible Excel file from a public ATP CSV mirror."""
     last_error: Exception | None = None
     for url_template in SACKMANN_URLS:
+        url = url_template.format(y=year)
         try:
-            raw = pd.read_csv(url_template.format(y=year))
+            raw = pd.read_csv(url)
             break
         except Exception as exc:  # noqa: BLE001
             last_error = exc
@@ -108,6 +113,7 @@ def download_sackmann_fallback(year: int, destination: Path) -> None:
         if last_error is not None:
             raise last_error
         raise RuntimeError(f"No Sackmann fallback URL configured for {year}")
+
     converted = pd.DataFrame(
         {
             "ATP": raw.get("tourney_id", ""),
@@ -136,34 +142,92 @@ def download_sackmann_fallback(year: int, destination: Path) -> None:
     converted = pd.concat([converted, score_frame], axis=1)
     converted = converted.dropna(subset=["Date", "Winner", "Loser"])
     converted.to_excel(destination, index=False)
+    return url
+
+
+def write_source_status(records: list[dict], healthy: bool, current: int) -> None:
+    """Persist source health so the site can disclose stale or fallback data."""
+    SOURCE_STATUS.write_text(json.dumps({
+        "checked_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+        "primary_source": "tennis-data.co.uk",
+        "fallback_sources": list(SACKMANN_URLS),
+        "records": records,
+        "healthy": healthy,
+        "current_year_source": next((record["source"] for record in records if record["year"] == current), None),
+        "current_year_url": next((record["url"] for record in records if record["year"] == current), None),
+    }, ensure_ascii=False, indent=2), encoding="utf-8")
 
 
 def main() -> int:
     DATA.mkdir(exist_ok=True)
     current = date.today().year
     use_primary_source = True
-    for y in range(FIRST_SEASON, current + 1):
-        out = DATA / f"atp_{y}.xlsx"
-        if out.exists() and y < current:
-            continue  # saison passée figée
+    records = []
+    for year in range(FIRST_SEASON, current + 1):
+        out = DATA / f"atp_{year}.xlsx"
+        if out.exists() and year < current:
+            records.append({"year": year, "source": "cache", "ok": True, "url": None, "error": None})
+            continue
         try:
             if use_primary_source:
-                download_with_retries(y, out)
-                print(f"  atp_{y}.xlsx OK")
+                download_with_retries(year, out)
+                print(f"  atp_{year}.xlsx OK")
+                records.append({
+                    "year": year,
+                    "source": "tennis-data.co.uk",
+                    "ok": True,
+                    "url": URL.format(y=year),
+                    "error": None,
+                })
             else:
-                download_sackmann_fallback(y, out)
-                print(f"  atp_{y}.xlsx OK via fallback")
+                fallback_url = download_sackmann_fallback(year, out)
+                print(f"  atp_{year}.xlsx OK via fallback")
+                records.append({
+                    "year": year,
+                    "source": "sackmann-compatible-fallback",
+                    "ok": True,
+                    "url": fallback_url,
+                    "error": None,
+                })
         except Exception as exc:  # noqa: BLE001
             use_primary_source = False
-            print(f"  atp_{y}.xlsx ÉCHEC : {exc}", file=sys.stderr)
+            print(f"  atp_{year}.xlsx ECHEC : {exc}", file=sys.stderr)
             try:
-                download_sackmann_fallback(y, out)
-                print(f"  atp_{y}.xlsx OK via Jeff Sackmann fallback")
+                fallback_url = download_sackmann_fallback(year, out)
+                print(f"  atp_{year}.xlsx OK via Sackmann-compatible fallback")
+                records.append({
+                    "year": year,
+                    "source": "sackmann-compatible-fallback",
+                    "ok": True,
+                    "url": fallback_url,
+                    "primary_error": str(exc),
+                    "error": None,
+                })
             except Exception as fallback_exc:  # noqa: BLE001
-                print(f"  atp_{y}.xlsx fallback ÉCHEC : {fallback_exc}", file=sys.stderr)
-                if y < current or not out.exists():
+                print(f"  atp_{year}.xlsx fallback ECHEC : {fallback_exc}", file=sys.stderr)
+                if year < current or not out.exists():
+                    records.append({
+                        "year": year,
+                        "source": "none",
+                        "ok": False,
+                        "url": None,
+                        "primary_error": str(exc),
+                        "error": str(fallback_exc),
+                    })
+                    write_source_status(records, healthy=False, current=current)
                     return 1
-                print(f"  atp_{y}.xlsx conserve depuis le fichier existant", file=sys.stderr)
+                print(f"  atp_{year}.xlsx conserve depuis le fichier existant", file=sys.stderr)
+                records.append({
+                    "year": year,
+                    "source": "cache",
+                    "ok": True,
+                    "url": None,
+                    "primary_error": str(exc),
+                    "fallback_error": str(fallback_exc),
+                    "error": None,
+                })
+
+    write_source_status(records, healthy=any(record["ok"] for record in records), current=current)
     return 0
 
 

@@ -1,0 +1,206 @@
+{
+  "checked_at": "2026-09-09T07:20:56+00:00",
+  "primary_source": "tennis-data.co.uk",
+  "fallback_sources": [
+    "https://raw.githubusercontent.com/azhou5849/tennis-atp-sackmann-data/master/atp_matches_{y}.csv",
+    "https://raw.githubusercontent.com/beta2k/tennis_atp/master/atp_matches_{y}.csv",
+    "https://raw.githubusercontent.com/FerrisPhilippi/tennis_atp_data/master/atp_matches_{y}.csv",
+    "https://raw.githubusercontent.com/aadvikchaturvedi/tennis_atp_dataset/master/atp_matches_{y}.csv",
+    "https://raw.githubusercontent.com/migumax/tennis_atp/master/{y}.csv"
+  ],
+  "records": [
+    {
+      "year": 2000,
+      "source": "cache",
+      "ok": true,
+      "url": null,
+      "error": null
+    },
+    {
+      "year": 2001,
+      "source": "cache",
+      "ok": true,
+      "url": null,
+      "error": null
+    },
+    {
+      "year": 2002,
+      "source": "cache",
+      "ok": true,
+      "url": null,
+      "error": null
+    },
+    {
+      "year": 2003,
+      "source": "cache",
+      "ok": true,
+      "url": null,
+      "error": null
+    },
+    {
+      "year": 2004,
+      "source": "cache",
+      "ok": true,
+      "url": null,
+      "error": null
+    },
+    {
+      "year": 2005,
+      "source": "cache",
+      "ok": true,
+      "url": null,
+      "error": null
+    },
+    {
+      "year": 2006,
+      "source": "cache",
+      "ok": true,
+      "url": null,
+      "error": null
+    },
+    {
+      "year": 2007,
+      "source": "cache",
+      "ok": true,
+      "url": null,
+      "error": null
+    },
+    {
+      "year": 2008,
+      "source": "cache",
+      "ok": true,
+      "url": null,
+      "error": null
+    },
+    {
+      "year": 2009,
+      "source": "cache",
+      "ok": true,
+      "url": null,
+      "error": null
+    },
+    {
+      "year": 2010,
+      "source": "cache",
+      "ok": true,
+      "url": null,
+      "error": null
+    },
+    {
+      "year": 2011,
+      "source": "cache",
+      "ok": true,
+      "url": null,
+      "error": null
+    },
+    {
+      "year": 2012,
+      "source": "cache",
+      "ok": true,
+      "url": null,
+      "error": null
+    },
+    {
+      "year": 2013,
+      "source": "cache",
+      "ok": true,
+      "url": null,
+      "error": null
+    },
+    {
+      "year": 2014,
+      "source": "cache",
+      "ok": true,
+      "url": null,
+      "error": null
+    },
+    {
+      "year": 2015,
+      "source": "cache",
+      "ok": true,
+      "url": null,
+      "error": null
+    },
+    {
+      "year": 2016,
+      "source": "cache",
+      "ok": true,
+      "url": null,
+      "error": null
+    },
+    {
+      "year": 2017,
+      "source": "cache",
+      "ok": true,
+      "url": null,
+      "error": null
+    },
+    {
+      "year": 2018,
+      "source": "cache",
+      "ok": true,
+      "url": null,
+      "error": null
+    },
+    {
+      "year": 2019,
+      "source": "cache",
+      "ok": true,
+      "url": null,
+      "error": null
+    },
+    {
+      "year": 2020,
+      "source": "cache",
+      "ok": true,
+      "url": null,
+      "error": null
+    },
+    {
+      "year": 2021,
+      "source": "cache",
+      "ok": true,
+      "url": null,
+      "error": null
+    },
+    {
+      "year": 2022,
+      "source": "cache",
+      "ok": true,
+      "url": null,
+      "error": null
+    },
+    {
+      "year": 2023,
+      "source": "cache",
+      "ok": true,
+      "url": null,
+      "error": null
+    },
+    {
+      "year": 2024,
+      "source": "cache",
+      "ok": true,
+      "url": null,
+      "error": null
+    },
+    {
+      "year": 2025,
+      "source": "cache",
+      "ok": true,
+      "url": null,
+      "error": null
+    },
+    {
+      "year": 2026,
+      "source": "sackmann-compatible-fallback",
+      "ok": true,
+      "url": "https://raw.githubusercontent.com/migumax/tennis_atp/master/2026.csv",
+      "primary_error": "HTTP Error 503: Service Temporarily Unavailable",
+      "error": null
+    }
+  ],
+  "healthy": true,
+  "current_year_source": "sackmann-compatible-fallback",
+  "current_year_url": "https://raw.githubusercontent.com/migumax/tennis_atp/master/2026.csv"
+}

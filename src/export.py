@@ -22,6 +22,7 @@ from src.sackmann_stats import aggregate_player_stats, load_match_stats  # noqa:
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "data" / "tennis_predictions.json"
 OUT_HIST = ROOT / "data" / "tennis_elo_history.json"
+SOURCE_STATUS = ROOT / "data" / "source_status.json"
 SITE_DIR = Path("C:/Users/valen/Documents/Projets/Projets_Informatiques/Perso/valentinmartine/public/data")
 VAL_START = np.datetime64("2023-01-01")
 TEST_START = np.datetime64("2024-01-01")
@@ -401,13 +402,23 @@ def main() -> int:
 
     player_stats = _enrich_with_sackmann_stats(_player_match_stats(allm), allm)
     has_sackmann_stats = any("stat_elo" in row for row in player_stats)
+    source_status = json.loads(SOURCE_STATUS.read_text(encoding="utf-8")) if SOURCE_STATUS.exists() else None
+    source_label = "tennis-data.co.uk (ATP, seasons 2000-2026)"
+    current_year_source = source_status.get("current_year_source") if source_status else None
+    current_year_url = source_status.get("current_year_url") if source_status else None
+    if current_year_source and current_year_source != "tennis-data.co.uk":
+        source_label += f" + fallback {current_year_source}"
+    if has_sackmann_stats:
+        source_label += " + Jeff Sackmann tennis_atp (serve/return statistics)"
 
     payload = {
         "generated_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "method": "Elo global+surface (K type FiveThirtyEight) + LightGBM (classement, forme, "
                   "activité, H2H), blend réglé sur validation 2023, test 2024+",
-        "source": "tennis-data.co.uk (ATP, saisons 2000-2026)"
-                  + (" + Jeff Sackmann tennis_atp (statistiques de service/retour)" if has_sackmann_stats else ""),
+        "source": source_label,
+        "source_status": source_status,
+        "refresh_status": "ok" if not current_year_source or current_year_source == "tennis-data.co.uk" else "primary_source_unavailable_fallback_used",
+        "current_year_source_url": current_year_url,
         "sackmann_stats_active": has_sackmann_stats,
         "n_matches": int(len(allm)),
         "last_match": str(allm["Date"].max().date()),
