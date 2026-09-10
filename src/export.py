@@ -487,8 +487,13 @@ def main(argv: list[str] | None = None) -> int:
             ranking_timeline.append({"player": p, "points": pts_series, "matches": len(hist)})
     # Par défaut, le graphe doit répondre à "qui est fort maintenant ?".
     # Les légendes historiques restent visibles dans la section des pics all-time,
-    # mais elles ne doivent pas masquer le classement courant.
-    default_players = [p["player"] for p in players[:8]] or [p["player"] for p in peaks[:8]]
+    # mais elles ne doivent pas masquer le classement courant. On ne retient que
+    # des joueurs présents dans `elo_timeline`, sinon le front recevrait une
+    # sélection impossible à afficher.
+    timeline_names = {serie["player"] for serie in elo_timeline}
+    default_players = [p["player"] for p in players if p["player"] in timeline_names][:8]
+    if not default_players:
+        default_players = [p["player"] for p in peaks if p["player"] in timeline_names][:8]
 
     year_end_list = [{"year": yy, "top": tops} for yy, tops in sorted(year_end.items())]
 
