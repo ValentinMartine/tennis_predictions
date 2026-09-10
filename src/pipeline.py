@@ -30,6 +30,7 @@ NA = float("nan")
 # Hors périmètre : circuits secondaires et compétitions par équipes, absentes de la
 # source primaire. Les miroirs Sackmann, eux, les fournissent (niveau « D »).
 OUT_OF_SCOPE_SERIES = frozenset({"Challenger", "ITF", "Davis Cup", "Fed Cup"})
+YEAR_END_ACTIVE_DAYS = 365
 
 
 def _finite(value: float) -> bool:
@@ -212,8 +213,16 @@ def build_features(allm: pd.DataFrame):
     slam_finals: list[dict] = []
     cur_year = None
 
-    def _snapshot_top(n=5):
-        act = [(p, r) for p, r in elo.rating.items() if elo.count[p] >= 15]
+    def _snapshot_top(snapshot_date, n=5):
+        act = [
+            (p, r)
+            for p, r in elo.rating.items()
+            if (
+                elo.count[p] >= 15
+                and last_dates[p]
+                and (snapshot_date - last_dates[p][-1]).days <= YEAR_END_ACTIVE_DAYS
+            )
+        ]
         act.sort(key=lambda t: -t[1])
         return [{"player": p, "elo": round(r, 1)} for p, r in act[:n]]
 
@@ -313,7 +322,7 @@ def build_features(allm: pd.DataFrame):
         if cur_year is None:
             cur_year = date.year
         elif date.year > cur_year:
-            year_end[cur_year] = _snapshot_top()
+            year_end[cur_year] = _snapshot_top(date - pd.Timedelta(days=1))
             cur_year = date.year
         elo.update(w, l, surface, m.get("Series"))
         history[w].append((date, round(elo.rating[w], 1)))
@@ -342,7 +351,7 @@ def build_features(allm: pd.DataFrame):
         pts[w], pts[l] = wp, lp
 
     if cur_year is not None:
-        year_end[cur_year] = _snapshot_top()  # année en cours = état actuel
+        year_end[cur_year] = _snapshot_top(date)  # année en cours = état actuel
 
     X = pd.DataFrame(rows)[FEATURES]
     y = np.array(ys)

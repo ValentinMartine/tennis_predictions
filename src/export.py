@@ -485,7 +485,10 @@ def main(argv: list[str] | None = None) -> int:
         pts_series = [monthly[ym] for ym in sorted(monthly)]
         if len(pts_series) >= 2:
             ranking_timeline.append({"player": p, "points": pts_series, "matches": len(hist)})
-    default_players = [p["player"] for p in peaks[:8]]
+    # Par défaut, le graphe doit répondre à "qui est fort maintenant ?".
+    # Les légendes historiques restent visibles dans la section des pics all-time,
+    # mais elles ne doivent pas masquer le classement courant.
+    default_players = [p["player"] for p in players[:8]] or [p["player"] for p in peaks[:8]]
 
     year_end_list = [{"year": yy, "top": tops} for yy, tops in sorted(year_end.items())]
 

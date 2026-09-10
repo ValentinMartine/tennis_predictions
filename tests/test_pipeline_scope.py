@@ -3,7 +3,7 @@ import numpy as np
 import pandas as pd
 
 from src.export import _opt_int
-from src.pipeline import _log1p_diff, _log_diff, load_matches
+from src.pipeline import _log1p_diff, _log_diff, build_features, load_matches
 
 
 def _match(series: str, winner: str, loser: str) -> dict:
@@ -86,3 +86,21 @@ def test_tournament_ids_compare_across_pandas_float_coercion() -> None:
 
     assert _id_key(16866.0) == _id_key(16866) == "16866"
     assert _id_key("16866") == "16866"
+
+
+def test_year_end_elo_does_not_freeze_inactive_players() -> None:
+    rows = []
+    for i in range(20):
+        match = _match("Grand Slam", "Ancienne Star", f"Ancien Opposant {i}")
+        match["Date"] = pd.Timestamp("2020-01-01") + pd.Timedelta(days=i)
+        rows.append(match)
+    for i in range(20):
+        match = _match("Grand Slam", "Joueur Actif", f"Opposant Actif {i}")
+        match["Date"] = pd.Timestamp("2026-01-01") + pd.Timedelta(days=i)
+        rows.append(match)
+
+    _, _, _, state = build_features(pd.DataFrame(rows))
+
+    current_top = {entry["player"] for entry in state["year_end"][2026]}
+    assert "Ancienne Star" not in current_top
+    assert "Joueur Actif" in current_top
