@@ -58,11 +58,16 @@ FEATURES = [
 
 
 def load_matches(tour: str = "atp") -> pd.DataFrame:
-    frames = []
-    for f in sorted(DATA.glob(f"{tour}_*.xlsx")):
-        df = pd.read_excel(f)
-        frames.append(df)
-    allm = pd.concat(frames, ignore_index=True)
+    # Le corpus consolidé est versionné : local et CI partent du même fichier. Les .xlsx
+    # ne servent que de fichiers de travail entre deux exécutions de download_data.py.
+    corpus = DATA / f"seasons_{tour}.parquet"
+    if corpus.exists():
+        allm = pd.read_parquet(corpus)
+    else:
+        frames = [pd.read_excel(f) for f in sorted(DATA.glob(f"{tour}_*.xlsx"))]
+        if not frames:
+            raise FileNotFoundError(f"Aucune saison {tour} : lancer scripts/download_data.py {tour}")
+        allm = pd.concat(frames, ignore_index=True)
     allm["Date"] = pd.to_datetime(allm["Date"])
     allm = allm[allm.get("Comment", "Completed").fillna("Completed") != "Walkover"]
     # Filet de sécurité : les fichiers déjà en cache peuvent contenir du Challenger/ITF

@@ -8,6 +8,8 @@ __pycache__/
 dist/
 build/
 data/*.xlsx
+# Le corpus consolidé data/seasons_*.parquet est versionné : c'est lui qui
+# garantit que le modèle local et celui de la CI partent des mêmes matchs.
 data/model.joblib
 data/model_wta.joblib
 data/sackmann/

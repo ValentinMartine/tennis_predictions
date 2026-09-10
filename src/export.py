@@ -198,9 +198,10 @@ def build_upcoming(tour: str, allm, state, model, blend_w) -> list[dict]:
         if p1 == p2:
             continue
         best_of = 5 if (tour == "atp" and _is_slam(season, match)) else 3
+        series = _series_for_tournament(season, match)
         rows.append(upcoming_features(state, p1, p2, match.get("surface") or "Hard",
                                       best_of, state["last_date"]))
-        metas.append((match, p1, p2))
+        metas.append((match, p1, p2, series))
 
     if not rows:
         return []
@@ -209,12 +210,12 @@ def build_upcoming(tour: str, allm, state, model, blend_w) -> list[dict]:
     p_blend = blend_w * p_ml + (1 - blend_w) * frame["p_elo"].to_numpy()
 
     upcoming = []
-    for (match, p1, p2), probability in zip(metas, p_blend):
+    for (match, p1, p2, series), probability in zip(metas, p_blend):
         probability = float(probability)
         market = market_prob(match.get("odds1"), match.get("odds2"))
         upcoming.append({
             "date": match["date"], "time": match.get("time"),
-            "tournament": match["tournament"], "surface": match.get("surface"),
+            "tournament": match["tournament"], "series": series, "surface": match.get("surface"),
             "round": match.get("round"),
             "player1": p1, "player2": p2,
             "rank1": match.get("rank1"), "rank2": match.get("rank2"),
@@ -237,6 +238,13 @@ def _id_key(value) -> str:
 def _is_slam(season, match) -> bool:
     same = season[season["ATP"].map(_id_key) == _id_key(match.get("tournament_id"))]
     return bool(len(same)) and str(same["Series"].iloc[0]) == "Grand Slam"
+
+
+def _series_for_tournament(season, match) -> str | None:
+    same = season[season["ATP"].map(_id_key) == _id_key(match.get("tournament_id"))]
+    if not len(same):
+        return None
+    return str(same["Series"].iloc[0])
 
 
 def main(argv: list[str] | None = None) -> int:

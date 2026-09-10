@@ -50,6 +50,12 @@ TOURS = {
     },
 }
 SHORT_NAME_RE = re.compile(r"^(.+?)\s+((?:[A-Z]\.){1,3})$")
+# Corpus consolidé, versionné : c'est lui qui rend le modèle reproductible. Les .xlsx
+# restent des fichiers de travail ignorés par git, la CI n'ayant plus à les retélécharger.
+NUMERIC_COLUMNS = (
+    ["WRank", "LRank", "WPts", "LPts", "Best of", "Wsets", "Lsets"]
+    + [f"{side}{index}" for index in range(1, 6) for side in ("W", "L")]
+)
 # Périmètre de tennis-data.co.uk : tableau final des épreuves du circuit principal.
 # Ni Challenger, ni ITF, ni Coupe Davis, ni qualifications.
 MAIN_TOUR_SERIES = frozenset({
@@ -57,6 +63,25 @@ MAIN_TOUR_SERIES = frozenset({
     "WTA 1000", "WTA 500", "WTA 250",
 })
 QUALIFYING_ROUNDS = frozenset({"Qualifying 1", "Qualifying 2", "Qualifying 3"})
+SACKMANN_LEVELS = {
+    "atp": {
+        "G": "Grand Slam",
+        "M": "Masters 1000",
+        "A": "ATP",
+        "F": "Tour Finals",
+        "D": "Davis Cup",
+    },
+    "wta": {
+        "G": "Grand Slam",
+        "PM": "WTA 1000",
+        "P": "WTA 1000",
+        "T1": "WTA 1000",
+        "T2": "WTA 500",
+        "T3": "WTA 250",
+        "I": "WTA 250",
+        "D": "Fed Cup",
+    },
+}
 MAX_ATTEMPTS = 4
 RETRY_DELAYS_SECONDS = (2, 5, 10)
 CURRENT_YEAR_MAX_STALENESS_DAYS = 3
@@ -91,80 +116,118 @@ def _name_key(text: object) -> str:
     return "".join(c for c in folded.lower() if c.isalnum())
 
 
-_SEASON_NAMES_CACHE: dict[Path, list[str]] = {}
+_SEASON_NAMES_CACHE: dict[tuple[str, int | None], dict[str, dict[str, str]]] = {}
 
 
-def _season_names(path: Path) -> list[str]:
-    if path not in _SEASON_NAMES_CACHE:
-        try:
-            frame = pd.read_excel(path, usecols=["Winner", "Loser"])
-        except Exception:  # noqa: BLE001
-            _SEASON_NAMES_CACHE[path] = []
-        else:
-            names = set()
-            for column in ("Winner", "Loser"):
-                names.update(frame[column].dropna().astype(str).str.strip())
-            _SEASON_NAMES_CACHE[path] = sorted(names)
-    return _SEASON_NAMES_CACHE[path]
+def _initials(tokens: list[str]) -> str:
+    return "".join(f"{token[0].upper()}." for token in tokens if token)
 
 
 def known_surnames(exclude_year: int | None = None, tour: str = "atp") -> dict[str, dict[str, str]]:
-    """Index {clé de nom de famille -> {initiales -> nom court connu}} des saisons en place.
-
-    tennis-data.co.uk écrit « Sinner J. », Sackmann et Valuebetennis « Jannik Sinner ».
-    Sans passerelle, une saison de secours crée 500 joueurs neufs et remet leur Elo à
-    la valeur initiale : le classement paraît figé alors que l'historique est coupé en deux.
-    La saison en cours de reconstruction est exclue, sinon une conversion approximative
-    d'un run précédent se réinjecte dans l'index et se perpétue.
-    """
+    """Indexe la convention tennis-data : nom de famille normalisé -> initiales -> nom court."""
+    key = (tour, exclude_year)
+    if key in _SEASON_NAMES_CACHE:
+        return _SEASON_NAMES_CACHE[key]
     index: dict[str, dict[str, str]] = {}
     for path in sorted(DATA.glob(f"{tour}_*.xlsx")):
-        if exclude_year is not None and path.stem == f"{tour}_{exclude_year}":
+        try:
+            year = int(path.stem.rsplit("_", 1)[1])
+        except (IndexError, ValueError):
+            year = None
+        if exclude_year is not None and year == exclude_year:
             continue
-        for name in _season_names(path):
-            match = SHORT_NAME_RE.match(name)
-            if match:
-                index.setdefault(_name_key(match.group(1)), {}).setdefault(match.group(2), name)
+        try:
+            frame = pd.read_excel(path, usecols=lambda column: column in {"Winner", "Loser"})
+        except Exception:  # noqa: BLE001
+            continue
+        for value in pd.concat([frame.get("Winner", pd.Series(dtype="string")),
+                                frame.get("Loser", pd.Series(dtype="string"))]).dropna():
+            match = SHORT_NAME_RE.match(str(value).strip())
+            if not match:
+                continue
+            surname, initials = match.groups()
+            index.setdefault(_name_key(surname), {})[initials] = str(value).strip()
+    _SEASON_NAMES_CACHE[key] = index
     return index
 
 
-def short_name_from_full(full_name: object, surnames: dict[str, dict[str, str]] | None = None) -> str:
-    """« Jannik Sinner » -> « Sinner J. », convention de la source primaire."""
-    tokens = str(full_name or "").split()
-    if len(tokens) < 2:
-        return str(full_name or "").strip()
-    surnames = surnames or {}
-    # Du nom de famille le plus long au plus court : « Felix Auger Aliassime » doit
-    # rendre « Auger-Aliassime F. » et non « Aliassime F. A. ».
+def short_name_from_full(name: object, surnames: dict[str, dict[str, str]]) -> str:
+    """Convertit un nom complet Valuebetennis/Sackmann vers la convention tennis-data."""
+    tokens = [token for token in re.split(r"\s+", str(name or "").strip()) if token]
+    if len(tokens) <= 1:
+        return str(name or "").strip()
+
     for split in range(1, len(tokens)):
-        known = surnames.get(_name_key("".join(tokens[split:])))
-        if not known:
+        surname = " ".join(tokens[split:])
+        surname_key = _name_key(surname)
+        choices = surnames.get(surname_key)
+        if not choices:
             continue
-        initials = "".join(f"{token[0].upper()}." for token in tokens[:split])
-        # « Taylor Harry Fritz » vaut « Fritz T. » si c'est la forme déjà utilisée :
-        # créer « Fritz T.H. » à côté scinderait l'Elo du joueur en deux.
-        for candidate in (initials, initials[:2]):
-            if candidate in known:
-                return known[candidate]
-        return f"{_first_known_surname(known)} {initials}"
-    return f"{tokens[-1]} {''.join(f'{token[0].upper()}.' for token in tokens[:-1])}"
+        initials = _initials(tokens[:split])
+        if initials in choices:
+            return choices[initials]
+        same_first_initial = [
+            short for known_initials, short in choices.items()
+            if known_initials[:1] == initials[:1]
+        ]
+        if len(same_first_initial) == 1:
+            return same_first_initial[0]
+
+    surname = tokens[-1]
+    initials = _initials(tokens[:-1])
+    return f"{surname} {initials}".strip()
 
 
-def _first_known_surname(known: dict[str, str]) -> str:
-    sample = next(iter(known.values()))
-    return SHORT_NAME_RE.match(sample).group(1).strip()
+def seasons_path(tour: str) -> Path:
+    return DATA / f"seasons_{tour}.parquet"
 
 
-SACKMANN_LEVELS = {
-    "atp": {"G": "Grand Slam", "M": "Masters 1000", "F": "Tour Finals", "A": "ATP", "D": "Davis Cup"},
-    # Nomenclature WTA : PM = Premier Mandatory (équivalent Masters 1000), P = Premier,
-    # I = International, T1..T5 = ancienne échelle Tier, D = Fed Cup / BJK Cup.
-    "wta": {
-        "G": "Grand Slam", "PM": "WTA 1000", "P": "WTA 500", "I": "WTA 250",
-        "F": "Tour Finals", "T1": "WTA 1000", "T2": "WTA 500", "T3": "WTA 250",
-        "T4": "WTA 250", "T5": "WTA 250", "D": "Fed Cup",
-    },
-}
+def load_seasons(tour: str) -> pd.DataFrame | None:
+    """Corpus consolidé du circuit, ou None s'il n'a pas encore été construit."""
+    path = seasons_path(tour)
+    if not path.exists():
+        return None
+    frame = pd.read_parquet(path)
+    frame["Date"] = pd.to_datetime(frame["Date"], errors="coerce")
+    return frame
+
+
+def normalise_types(frame: pd.DataFrame) -> pd.DataFrame:
+    """Types stables pour Parquet : « NR » et cases vides deviennent des NaN."""
+    frame = frame.copy()
+    frame["Date"] = pd.to_datetime(frame["Date"], errors="coerce")
+    for column in frame.columns:
+        if column == "Date":
+            continue
+        if column in NUMERIC_COLUMNS:
+            frame[column] = pd.to_numeric(frame[column], errors="coerce")
+        else:
+            frame[column] = frame[column].astype("string")
+    return frame
+
+
+def consolidate_seasons(tour: str) -> tuple[Path, int]:
+    """Réécrit le corpus : tout .xlsx présent fait autorité, le Parquet fournit le reste.
+
+    Cette règle évite la perte d'une saison présente sur le disque mais absente du corpus,
+    et rend l'opération idempotente quel que soit ce qui a été retéléchargé.
+    """
+    on_disk = {int(path.stem.rsplit("_", 1)[1]): path for path in DATA.glob(f"{tour}_*.xlsx")}
+    frames = []
+    previous = load_seasons(tour)
+    if previous is not None:
+        kept = previous[~previous["Date"].dt.year.isin(on_disk)]
+        if len(kept):
+            frames.append(kept)
+    for year in sorted(on_disk):
+        frames.append(pd.read_excel(on_disk[year]))
+    if not frames:
+        raise RuntimeError(f"Aucune saison à consolider pour {tour}")
+    merged = normalise_types(pd.concat(frames, ignore_index=True))
+    merged = merged.dropna(subset=["Date"]).sort_values("Date").reset_index(drop=True)
+    target = seasons_path(tour)
+    merged.to_parquet(target, index=False, compression="zstd")
+    return target, len(merged)
 
 
 def series_from_sackmann_level(level: object, tour: str = "atp") -> str:
@@ -477,10 +540,13 @@ def main(argv: list[str] | None = None) -> int:
     current = date.today().year
     records = []
     primary_failures = 0
+    seasons = load_seasons(tour)
+    covered = set(seasons["Date"].dt.year.dropna().astype(int)) if seasons is not None else set()
     for year in range(FIRST_SEASON, current + 1):
         out = DATA / f"{tour}_{year}.xlsx"
-        if out.exists() and year < current:
-            records.append({"year": year, "source": "cache", "ok": True, "url": None, "error": None})
+        if year < current and (year in covered or out.exists()):
+            records.append({"year": year, "source": "corpus" if year in covered else "cache",
+                            "ok": True, "url": None, "error": None})
             continue
         try:
             # Chaque saison retente la source primaire, mais sans repayer quatre essais
@@ -548,6 +614,8 @@ def main(argv: list[str] | None = None) -> int:
                     "error": None,
                 })
 
+    target, rows = consolidate_seasons(tour)
+    print(f"  {target.name} : {rows} matchs consolidés")
     write_source_status(records, healthy=all(record["ok"] for record in records), current=current, tour=tour)
     return 0
 

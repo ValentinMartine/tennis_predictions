@@ -56,6 +56,7 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add data/tennis_predictions.json data/tennis_elo_history.json data/source_status.json
           git add data/tennis_predictions_wta.json data/tennis_elo_history_wta.json data/source_status_wta.json
+          git add data/seasons_atp.parquet data/seasons_wta.parquet
           git add data/upcoming_raw.json
           if git diff --cached --quiet; then
             echo "No prediction changes."

@@ -75,9 +75,10 @@ def test_upcoming_keeps_only_the_tour_own_tournament_ids(tmp_path, monkeypatch) 
         def predict_proba(self, frame):
             return np.column_stack([np.full(len(frame), 0.4), np.full(len(frame), 0.6)])
 
-    export.build_upcoming("atp", saison, {"last_date": pd.Timestamp("2026-09-08")}, _Modele(), 1.0)
+    upcoming = export.build_upcoming("atp", saison, {"last_date": pd.Timestamp("2026-09-08")}, _Modele(), 1.0)
 
     assert gardes == [("Khachanov K.", "Blockx A.")]
+    assert upcoming[0]["series"] == "Grand Slam"
 
 
 def test_tournament_ids_compare_across_pandas_float_coercion() -> None:
