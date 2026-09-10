@@ -44,6 +44,7 @@ SITE_DIR = Path("C:/Users/valen/Documents/Projets/Projets_Informatiques/Perso/va
 VAL_START = np.datetime64("2023-01-01")
 TEST_START = np.datetime64("2024-01-01")
 N_TOURNAMENTS = 4
+MARKET_MODEL_GAP_ALERT = 0.15
 
 
 def _opt_int(value) -> int | None:
@@ -53,6 +54,62 @@ def _opt_int(value) -> int | None:
     except (TypeError, ValueError):
         return None
     return int(number) if number == number and number > 0 else None
+
+
+def _valid_prob(value) -> bool:
+    try:
+        number = float(value)
+    except (TypeError, ValueError):
+        return False
+    return bool(np.isfinite(number) and 0.0 <= number <= 1.0)
+
+
+def _best_market_blend_weight(y, model_p1, market_p1, mask) -> float:
+    """Learn how much pre-match market probability to use when it is available."""
+    idx = mask & np.isfinite(market_p1)
+    if not idx.any():
+        return 0.0
+    best_w, best_ll = 0.0, float("inf")
+    for w in np.arange(0.0, 1.001, 0.01):
+        p = w * market_p1[idx] + (1 - w) * model_p1[idx]
+        ll = log_loss(y[idx], np.clip(p, 1e-6, 1 - 1e-6))
+        if ll < best_ll:
+            best_w, best_ll = float(w), float(ll)
+    return best_w
+
+
+def _market_adjusted_probability(model_p1: float, market_p1: float | None, market_weight: float) -> float:
+    """Primary probability: independent model unless market calibration is available."""
+    if not _valid_prob(market_p1):
+        return float(model_p1)
+    return float(market_weight * float(market_p1) + (1 - market_weight) * model_p1)
+
+
+def _prediction_fields(
+    p1: str,
+    p2: str,
+    model_p1: float,
+    market_p1: float | None,
+    market_weight: float,
+) -> dict:
+    """Return independent-model and market-adjusted predictions from p1 perspective."""
+    primary_p1 = _market_adjusted_probability(model_p1, market_p1, market_weight)
+    primary_player = p1 if primary_p1 >= 0.5 else p2
+    model_player = p1 if model_p1 >= 0.5 else p2
+    market_player = None
+    if _valid_prob(market_p1):
+        market_player = p1 if float(market_p1) >= 0.5 else p2
+    return {
+        "p1_win": round(float(primary_p1), 3),
+        "predicted_player": primary_player,
+        "predicted_prob": round(float(primary_p1 if primary_player == p1 else 1 - primary_p1), 3),
+        "prediction_source": "market_calibrated" if _valid_prob(market_p1) and market_weight > 0 else "independent_model",
+        "model_p1_win": round(float(model_p1), 3),
+        "model_predicted_player": model_player,
+        "model_predicted_prob": round(float(model_p1 if model_player == p1 else 1 - model_p1), 3),
+        "market_predicted_player": market_player,
+        "market_model_gap": round(abs(float(market_p1) - float(model_p1)), 3) if _valid_prob(market_p1) else None,
+    }
 
 
 def _score_parts(match) -> list[tuple[int, int]]:
@@ -172,7 +229,7 @@ def _enrich_with_sackmann_stats(base_stats: list[dict], allm) -> list[dict]:
     return enriched
 
 
-def build_upcoming(tour: str, allm, state, model, blend_w) -> list[dict]:
+def build_upcoming(tour: str, allm, state, model, blend_w, market_weight: float = 0.0) -> list[dict]:
     """Matchs à venir du circuit, prédits avec l'état arrêté au dernier match connu."""
     if not UPCOMING_RAW.exists():
         return []
@@ -213,6 +270,7 @@ def build_upcoming(tour: str, allm, state, model, blend_w) -> list[dict]:
     for (match, p1, p2, series), probability in zip(metas, p_blend):
         probability = float(probability)
         market = market_prob(match.get("odds1"), match.get("odds2"))
+        prediction = _prediction_fields(p1, p2, probability, market, market_weight)
         upcoming.append({
             "date": match["date"], "time": match.get("time"),
             "tournament": match["tournament"], "series": series, "surface": match.get("surface"),
@@ -220,10 +278,13 @@ def build_upcoming(tour: str, allm, state, model, blend_w) -> list[dict]:
             "player1": p1, "player2": p2,
             "rank1": match.get("rank1"), "rank2": match.get("rank2"),
             "odds1": match.get("odds1"), "odds2": match.get("odds2"),
-            "p1_win": round(probability, 3),
-            "predicted_player": p1 if probability >= 0.5 else p2,
-            "predicted_prob": round(probability if probability >= 0.5 else 1 - probability, 3),
+            **prediction,
             "market_p1_win": round(market, 3) if market is not None else None,
+            "rank_features_available": bool(match.get("rank1") and match.get("rank2")),
+            "probability_warning": (
+                "model_market_gap" if prediction["market_model_gap"] is not None
+                and prediction["market_model_gap"] >= MARKET_MODEL_GAP_ALERT else None
+            ),
         })
     upcoming.sort(key=lambda m: (m["date"], m["time"] or ""))
     return upcoming
@@ -260,6 +321,17 @@ def main(argv: list[str] | None = None) -> int:
     dates = np.array([m["date"] for m in metas], dtype="datetime64[ns]")
     va = (dates >= VAL_START) & (dates < TEST_START)
     te = dates >= TEST_START
+    market_p1 = np.full(len(metas), np.nan)
+    for i, m in enumerate(metas):
+        q = market_prob(m["avgw"], m["avgl"])
+        if q is not None:
+            market_p1[i] = q if m["p1"] == m["winner"] else 1 - q
+    market_weight = _best_market_blend_weight(y, p_blend, market_p1, va)
+    p_primary = np.where(
+        np.isfinite(market_p1),
+        market_weight * market_p1 + (1 - market_weight) * p_blend,
+        p_blend,
+    )
 
     def block(p):
         pp, yy = p[te], y[te]
@@ -287,8 +359,10 @@ def main(argv: list[str] | None = None) -> int:
         "elo": block(X["p_elo"].to_numpy()),
         "ml": block(p_ml),
         "blend": block(p_blend),
+        "market_calibrated": block(p_primary),
         "market": market,
         "blend_w": w,
+        "market_blend_weight": market_weight,
     }
 
     # précision par surface (test)
@@ -296,7 +370,7 @@ def main(argv: list[str] | None = None) -> int:
     for s in SURFACES:
         idx = [i for i in range(len(metas)) if te[i] and metas[i]["surface"] == s]
         if idx:
-            pp = p_blend[idx]
+            pp = p_primary[idx]
             yy = y[idx]
             by_surface[s] = {"n": len(idx), "accuracy": round(float(((pp > 0.5) == (yy == 1)).mean()), 4)}
     metrics["by_surface"] = by_surface
@@ -310,7 +384,7 @@ def main(argv: list[str] | None = None) -> int:
         out = {}
         for g, idx in groups.items():
             if len(idx) >= 50:
-                pp, yy = p_blend[idx], y[idx]
+                pp, yy = p_primary[idx], y[idx]
                 out[g] = {"n": len(idx), "accuracy": round(float(((pp > 0.5) == (yy == 1)).mean()), 4)}
         return out
 
@@ -410,11 +484,12 @@ def main(argv: list[str] | None = None) -> int:
         if dates[i] < season_start:
             break
         m = metas[i]
-        p1_prob = float(p_blend[i])
-        predicted_player = m["p1"] if p1_prob >= 0.5 else m["p2"]
-        predicted_prob = p1_prob if predicted_player == m["p1"] else 1 - p1_prob
-        pw = float(p1_prob if m["p1"] == m["winner"] else 1 - p1_prob)
         q = market_prob(m["avgw"], m["avgl"])
+        q_p1 = q if (q is not None and m["p1"] == m["winner"]) else (1 - q if q is not None else None)
+        prediction = _prediction_fields(m["p1"], m["p2"], float(p_blend[i]), q_p1, market_weight)
+        primary_p1 = float(prediction["p1_win"])
+        pw = float(primary_p1 if m["p1"] == m["winner"] else 1 - primary_p1)
+        model_predicted_player = prediction["model_predicted_player"]
         recent_matches.append({
             "date": str(np.datetime_as_string(dates[i], unit="D")),
             "tournament": m["tournament"], "series": m["series"],
@@ -423,10 +498,16 @@ def main(argv: list[str] | None = None) -> int:
             "wrank": _opt_int(m["wrank"]),
             "lrank": _opt_int(m["lrank"]),
             "p_win": round(pw, 3),
-            "predicted_player": predicted_player,
-            "predicted_prob": round(float(predicted_prob), 3),
-            "model_correct": predicted_player == m["winner"],
+            **prediction,
+            "model_correct": prediction["predicted_player"] == m["winner"],
+            "independent_model_correct": model_predicted_player == m["winner"],
             "market_p_win": round(float(q), 3) if q is not None else None,
+            "rank_features_available": _opt_int(m["wrank"]) is not None and _opt_int(m["lrank"]) is not None,
+            "probability_warning": (
+                "missing_rank_features" if _opt_int(m["wrank"]) is None or _opt_int(m["lrank"]) is None
+                else "model_market_gap" if prediction["market_model_gap"] is not None
+                and prediction["market_model_gap"] >= MARKET_MODEL_GAP_ALERT else None
+            ),
             "score": m["score"],
             "retired": str(m.get("comment") or "") == "Retired",
             # La source de secours tronque le dernier set d'un match sur huit : le dire
@@ -521,7 +602,7 @@ def main(argv: list[str] | None = None) -> int:
 
     player_stats = _enrich_with_sackmann_stats(_player_match_stats(allm), allm)
     has_sackmann_stats = any("stat_elo" in row for row in player_stats)
-    upcoming = build_upcoming(tour, allm, state, model, w)
+    upcoming = build_upcoming(tour, allm, state, model, w, market_weight)
     source_status = json.loads(SOURCE_STATUS.read_text(encoding="utf-8")) if SOURCE_STATUS.exists() else None
     source_label = f"tennis-data.co.uk ({tour.upper()}, seasons 2000-{allm['Date'].max().year})"
     current_year_source = source_status.get("current_year_source") if source_status else None

@@ -2,7 +2,7 @@
 import numpy as np
 import pandas as pd
 
-from src.export import _opt_int
+from src.export import _best_market_blend_weight, _opt_int, _prediction_fields
 from src.pipeline import _log1p_diff, _log_diff, build_features, load_matches
 
 
@@ -43,6 +43,25 @@ def test_optional_rank_export_rejects_nan_and_zero() -> None:
     assert _opt_int(float("nan")) is None
     assert _opt_int(0) is None
     assert _opt_int(None) is None
+
+
+def test_market_blend_weight_prefers_better_calibrated_market() -> None:
+    y = np.array([1, 0, 1, 0])
+    weak_model = np.array([0.55, 0.45, 0.56, 0.44])
+    strong_market = np.array([0.9, 0.1, 0.85, 0.15])
+    mask = np.array([True, True, True, True])
+
+    assert _best_market_blend_weight(y, weak_model, strong_market, mask) > 0.5
+
+
+def test_prediction_fields_keep_independent_model_probability_visible() -> None:
+    fields = _prediction_fields("Zverev A.", "Zandschulp B.V.D.", 0.56, 0.86, 1.0)
+
+    assert fields["predicted_player"] == "Zverev A."
+    assert fields["predicted_prob"] == 0.86
+    assert fields["prediction_source"] == "market_calibrated"
+    assert fields["model_predicted_prob"] == 0.56
+    assert fields["market_model_gap"] == 0.3
 
 
 def test_upcoming_keeps_only_the_tour_own_tournament_ids(tmp_path, monkeypatch) -> None:
