@@ -1,5 +1,5 @@
 {
- "fetched_at": "2026-09-10T00:10:01+00:00",
+ "fetched_at": "2026-09-10T00:23:25+00:00",
  "source": "https://www.valuebetennis.com/matchs-a-venir.htm",
  "error": null,
  "matches": [
@@ -52,26 +52,26 @@
    "tournament": "Kia Open - Barranquilla",
    "surface": "Hard",
    "round": "2nd Round",
-   "player1": "Nadia Podoroska",
-   "player2": "Anna Blinkova",
-   "rank1": 449,
-   "rank2": 95,
-   "odds1": 2.81,
-   "odds2": 1.44
-  },
-  {
-   "date": "2026-09-10",
-   "time": "02:50",
-   "tournament_id": 16939,
-   "tournament": "Kia Open - Barranquilla",
-   "surface": "Hard",
-   "round": "2nd Round",
    "player1": "Julia Riera",
    "player2": "Mary Stoiana",
    "rank1": 147,
    "rank2": 122,
    "odds1": 2.92,
    "odds2": 1.42
+  },
+  {
+   "date": "2026-09-10",
+   "time": "03:20",
+   "tournament_id": 16939,
+   "tournament": "Kia Open - Barranquilla",
+   "surface": "Hard",
+   "round": "2nd Round",
+   "player1": "Nadia Podoroska",
+   "player2": "Anna Blinkova",
+   "rank1": 449,
+   "rank2": 95,
+   "odds1": 2.81,
+   "odds2": 1.44
   },
   {
    "date": "2026-09-10",
@@ -840,8 +840,8 @@
    "player2": "Gabriele Thomas Brancatelli",
    "rank1": null,
    "rank2": null,
-   "odds1": null,
-   "odds2": null
+   "odds1": 1.22,
+   "odds2": 4.12
   },
   {
    "date": "2026-09-10",
@@ -854,8 +854,8 @@
    "player2": "Lorenzo Lorusso",
    "rank1": null,
    "rank2": null,
-   "odds1": null,
-   "odds2": null
+   "odds1": 3.12,
+   "odds2": 1.34
   },
   {
    "date": "2026-09-10",
@@ -868,8 +868,22 @@
    "player2": "Paul Jubb",
    "rank1": null,
    "rank2": null,
-   "odds1": null,
-   "odds2": null
+   "odds1": 19.86,
+   "odds2": 1.01
+  },
+  {
+   "date": "2026-09-10",
+   "time": "09:00",
+   "tournament_id": 16933,
+   "tournament": "M15 Hurghada",
+   "surface": "Hard",
+   "round": "2nd Round",
+   "player1": "Charles Bertimon",
+   "player2": "Ivan Gretskiy",
+   "rank1": null,
+   "rank2": null,
+   "odds1": 1.35,
+   "odds2": 3.07
   },
   {
    "date": "2026-09-10",
@@ -882,8 +896,8 @@
    "player2": "Aaron Funk",
    "rank1": null,
    "rank2": null,
-   "odds1": null,
-   "odds2": null
+   "odds1": 2.21,
+   "odds2": 1.63
   },
   {
    "date": "2026-09-10",
@@ -896,8 +910,8 @@
    "player2": "Makar Elesin",
    "rank1": null,
    "rank2": null,
-   "odds1": null,
-   "odds2": null
+   "odds1": 1.05,
+   "odds2": 9.56
   },
   {
    "date": "2026-09-10",
@@ -910,8 +924,8 @@
    "player2": "Saveliy Ivanov",
    "rank1": 608,
    "rank2": 895,
-   "odds1": null,
-   "odds2": null
+   "odds1": 1.05,
+   "odds2": 9.56
   },
   {
    "date": "2026-09-10",
@@ -924,8 +938,8 @@
    "player2": "Michal Krajci",
    "rank1": null,
    "rank2": null,
-   "odds1": null,
-   "odds2": null
+   "odds1": 11.42,
+   "odds2": 1.04
   },
   {
    "date": "2026-09-10",
@@ -966,8 +980,8 @@
    "player2": "Wozuko Mdlulwa",
    "rank1": 731,
    "rank2": 870,
-   "odds1": null,
-   "odds2": null
+   "odds1": 1.32,
+   "odds2": 3.27
   },
   {
    "date": "2026-09-10",
@@ -1022,8 +1036,8 @@
    "player2": "Zeel Desai",
    "rank1": null,
    "rank2": null,
-   "odds1": null,
-   "odds2": null
+   "odds1": 1.94,
+   "odds2": 1.83
   },
   {
    "date": "2026-09-10",
@@ -1288,8 +1302,8 @@
    "player2": "Anastasia Safta",
    "rank1": 856,
    "rank2": 891,
-   "odds1": null,
-   "odds2": null
+   "odds1": 1.29,
+   "odds2": 3.47
   },
   {
    "date": "2026-09-10",
@@ -1302,8 +1316,8 @@
    "player2": "Bianca Elena Barbulescu",
    "rank1": 882,
    "rank2": 690,
-   "odds1": null,
-   "odds2": null
+   "odds1": 1.39,
+   "odds2": 2.89
   },
   {
    "date": "2026-09-10",
@@ -1316,8 +1330,8 @@
    "player2": "Alesia Breaz",
    "rank1": 448,
    "rank2": 894,
-   "odds1": null,
-   "odds2": null
+   "odds1": 1.64,
+   "odds2": 2.19
   },
   {
    "date": "2026-09-10",
@@ -1330,8 +1344,8 @@
    "player2": "Teodora Miron",
    "rank1": null,
    "rank2": null,
-   "odds1": null,
-   "odds2": null
+   "odds1": 4.84,
+   "odds2": 1.16
   },
   {
    "date": "2026-09-10",
@@ -1386,8 +1400,8 @@
    "player2": "Hazem Naw",
    "rank1": 765,
    "rank2": 842,
-   "odds1": null,
-   "odds2": null
+   "odds1": 2.19,
+   "odds2": 1.65
   },
   {
    "date": "2026-09-10",
@@ -1400,8 +1414,8 @@
    "player2": "Mohamed Nazim Makhlouf",
    "rank1": null,
    "rank2": null,
-   "odds1": null,
-   "odds2": null
+   "odds1": 1.52,
+   "odds2": 2.45
   },
   {
    "date": "2026-09-10",
@@ -1414,8 +1428,8 @@
    "player2": "Matthew Carroll",
    "rank1": null,
    "rank2": null,
-   "odds1": null,
-   "odds2": null
+   "odds1": 1.29,
+   "odds2": 3.42
   },
   {
    "date": "2026-09-10",
@@ -1428,8 +1442,8 @@
    "player2": "Oscar Brown",
    "rank1": null,
    "rank2": null,
-   "odds1": null,
-   "odds2": null
+   "odds1": 2.13,
+   "odds2": 1.68
   },
   {
    "date": "2026-09-10",
@@ -1442,8 +1456,8 @@
    "player2": "Josh Manuel",
    "rank1": null,
    "rank2": null,
-   "odds1": null,
-   "odds2": null
+   "odds1": 1.21,
+   "odds2": 4.14
   },
   {
    "date": "2026-09-10",
@@ -1554,8 +1568,8 @@
    "player2": "Lucia Cortez Llorca",
    "rank1": 243,
    "rank2": 468,
-   "odds1": null,
-   "odds2": null
+   "odds1": 1.39,
+   "odds2": 2.87
   },
   {
    "date": "2026-09-10",
@@ -1568,8 +1582,8 @@
    "player2": "Daria Yesypchuk",
    "rank1": 671,
    "rank2": 522,
-   "odds1": null,
-   "odds2": null
+   "odds1": 1.89,
+   "odds2": 1.86
   },
   {
    "date": "2026-09-10",
@@ -1582,8 +1596,8 @@
    "player2": "Meritxell Teixido Garcia",
    "rank1": 420,
    "rank2": 840,
-   "odds1": null,
-   "odds2": null
+   "odds1": 1.11,
+   "odds2": 6.15
   },
   {
    "date": "2026-09-10",
@@ -1624,8 +1638,8 @@
    "player2": "Ariana Geerlings",
    "rank1": null,
    "rank2": null,
-   "odds1": null,
-   "odds2": null
+   "odds1": 15.93,
+   "odds2": 1.02
   },
   {
    "date": "2026-09-10",
@@ -1638,8 +1652,8 @@
    "player2": "Francesca Pace",
    "rank1": 438,
    "rank2": 324,
-   "odds1": null,
-   "odds2": null
+   "odds1": 2.93,
+   "odds2": 1.38
   },
   {
    "date": "2026-09-10",
@@ -1652,8 +1666,8 @@
    "player2": "Marie Mattel",
    "rank1": null,
    "rank2": null,
-   "odds1": null,
-   "odds2": null
+   "odds1": 2.21,
+   "odds2": 1.63
   },
   {
    "date": "2026-09-10",
@@ -1666,8 +1680,8 @@
    "player2": "Sarah Iliev",
    "rank1": 523,
    "rank2": 776,
-   "odds1": null,
-   "odds2": null
+   "odds1": 2.13,
+   "odds2": 1.68
   },
   {
    "date": "2026-09-10",
@@ -1680,8 +1694,8 @@
    "player2": "Marta Soriano Santiago",
    "rank1": 881,
    "rank2": 790,
-   "odds1": null,
-   "odds2": null
+   "odds1": 3.86,
+   "odds2": 1.24
   },
   {
    "date": "2026-09-10",
@@ -1694,8 +1708,8 @@
    "player2": "Daphnee Mpetshi Perricard",
    "rank1": null,
    "rank2": null,
-   "odds1": null,
-   "odds2": null
+   "odds1": 4.14,
+   "odds2": 1.21
   },
   {
    "date": "2026-09-10",
@@ -1708,8 +1722,8 @@
    "player2": "Kristina Belkova",
    "rank1": null,
    "rank2": null,
-   "odds1": null,
-   "odds2": null
+   "odds1": 1.16,
+   "odds2": 5.02
   },
   {
    "date": "2026-09-10",
@@ -1750,8 +1764,8 @@
    "player2": "Yasmine Mansouri",
    "rank1": null,
    "rank2": null,
-   "odds1": null,
-   "odds2": null
+   "odds1": 11.49,
+   "odds2": 1.04
   },
   {
    "date": "2026-09-10",
@@ -1778,8 +1792,8 @@
    "player2": "Samaira Pahwa",
    "rank1": null,
    "rank2": null,
-   "odds1": null,
-   "odds2": null
+   "odds1": 1.06,
+   "odds2": 9.39
   },
   {
    "date": "2026-09-10",
@@ -1932,8 +1946,8 @@
    "player2": "Massimo Pizzigoni",
    "rank1": null,
    "rank2": null,
-   "odds1": null,
-   "odds2": null
+   "odds1": 1.59,
+   "odds2": 2.26
   },
   {
    "date": "2026-09-10",
@@ -1960,8 +1974,8 @@
    "player2": "Antonio Marigliano",
    "rank1": null,
    "rank2": null,
-   "odds1": null,
-   "odds2": null
+   "odds1": 1.13,
+   "odds2": 5.39
   },
   {
    "date": "2026-09-10",
@@ -1988,8 +2002,8 @@
    "player2": "Fabrizio Andaloro",
    "rank1": 894,
    "rank2": 527,
-   "odds1": null,
-   "odds2": null
+   "odds1": 2.6,
+   "odds2": 1.45
   },
   {
    "date": "2026-09-10",
@@ -2044,8 +2058,8 @@
    "player2": "Angelica Raggi",
    "rank1": 845,
    "rank2": 668,
-   "odds1": null,
-   "odds2": null
+   "odds1": 4.05,
+   "odds2": 1.22
   },
   {
    "date": "2026-09-10",
@@ -2058,8 +2072,8 @@
    "player2": "Sveva Sveva Fumagalli",
    "rank1": null,
    "rank2": null,
-   "odds1": null,
-   "odds2": null
+   "odds1": 2.27,
+   "odds2": 1.6
   },
   {
    "date": "2026-09-10",
@@ -2072,8 +2086,8 @@
    "player2": "Agnese Gentili",
    "rank1": null,
    "rank2": null,
-   "odds1": null,
-   "odds2": null
+   "odds1": 1.36,
+   "odds2": 3.05
   },
   {
    "date": "2026-09-10",
@@ -2086,8 +2100,8 @@
    "player2": "Anne Schaefer",
    "rank1": 864,
    "rank2": 846,
-   "odds1": null,
-   "odds2": null
+   "odds1": 2.76,
+   "odds2": 1.42
   },
   {
    "date": "2026-09-10",
@@ -2114,8 +2128,8 @@
    "player2": "Eleonora Alvisi",
    "rank1": 683,
    "rank2": 894,
-   "odds1": null,
-   "odds2": null
+   "odds1": 1.7,
+   "odds2": 2.09
   },
   {
    "date": "2026-09-10",
@@ -2128,8 +2142,8 @@
    "player2": "Eva Marie Voracek",
    "rank1": null,
    "rank2": null,
-   "odds1": null,
-   "odds2": null
+   "odds1": 5.3,
+   "odds2": 1.14
   },
   {
    "date": "2026-09-10",
@@ -2548,8 +2562,8 @@
    "player2": "Alexander Vasilev",
    "rank1": null,
    "rank2": null,
-   "odds1": null,
-   "odds2": null
+   "odds1": 3.07,
+   "odds2": 1.33
   },
   {
    "date": "2026-09-10",
@@ -2562,8 +2576,8 @@
    "player2": "Nikola Slavic",
    "rank1": 868,
    "rank2": 792,
-   "odds1": null,
-   "odds2": null
+   "odds1": 1.99,
+   "odds2": 1.78
   },
   {
    "date": "2026-09-10",
@@ -2590,8 +2604,8 @@
    "player2": "Sebastian Dominko",
    "rank1": null,
    "rank2": null,
-   "odds1": null,
-   "odds2": null
+   "odds1": 4.91,
+   "odds2": 1.16
   },
   {
    "date": "2026-09-10",
@@ -2604,8 +2618,8 @@
    "player2": "Samir Banerjee",
    "rank1": 785,
    "rank2": 534,
-   "odds1": null,
-   "odds2": null
+   "odds1": 3.03,
+   "odds2": 1.34
   },
   {
    "date": "2026-09-10",
@@ -2618,8 +2632,8 @@
    "player2": "Nicolas Ifi",
    "rank1": null,
    "rank2": null,
-   "odds1": null,
-   "odds2": null
+   "odds1": 1.28,
+   "odds2": 3.43
   },
   {
    "date": "2026-09-10",
@@ -2772,8 +2786,8 @@
    "player2": "Roberto Perez Socas",
    "rank1": null,
    "rank2": null,
-   "odds1": null,
-   "odds2": null
+   "odds1": 2.42,
+   "odds2": 1.51
   },
   {
    "date": "2026-09-10",
