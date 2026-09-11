@@ -57,6 +57,13 @@ def _opt_int(value) -> int | None:
     return int(number) if number == number and number > 0 else None
 
 
+def _text_or_empty(value) -> str:
+    """Chaîne sûre pour les champs optionnels pandas (NaN/pd.NA -> '')."""
+    if value is None or pd.isna(value):
+        return ""
+    return str(value)
+
+
 def _valid_prob(value) -> bool:
     try:
         number = float(value)
@@ -535,10 +542,10 @@ def main(argv: list[str] | None = None) -> int:
                 and prediction["market_model_gap"] >= MARKET_MODEL_GAP_ALERT else None
             ),
             "score": m["score"],
-            "retired": str(m.get("comment") or "") == "Retired",
+            "retired": _text_or_empty(m.get("comment")) == "Retired",
             # La source de secours tronque le dernier set d'un match sur huit : le dire
             # plutôt que d'afficher un score qui contredit le vainqueur.
-            "score_partial": str(m.get("score_status") or "") == "partial",
+            "score_partial": _text_or_empty(m.get("score_status")) == "partial",
         })
 
     # ===== Historique Elo 2000-2026 =====

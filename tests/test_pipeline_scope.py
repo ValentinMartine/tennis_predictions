@@ -2,7 +2,7 @@
 import numpy as np
 import pandas as pd
 
-from src.export import _best_market_blend_weight, _opt_int, _prediction_fields
+from src.export import _best_market_blend_weight, _opt_int, _prediction_fields, _text_or_empty
 from src.modeling import fit_probability_calibrator, probability_metrics
 from src.pipeline import FEATURES, _log1p_diff, _log_diff, _round_flags, build_features, load_matches
 
@@ -33,6 +33,34 @@ def test_load_matches_drops_challenger_and_itf(tmp_path, monkeypatch) -> None:
     assert "Epsilon" not in set(kept["Winner"])
 
 
+def test_wta_results_patch_is_loaded_after_cached_source_lag(tmp_path, monkeypatch) -> None:
+    base = _match("Grand Slam", "Gauff C.", "Andreeva M.")
+    base.update({
+        "ATP": 16865,
+        "Tournament": "U.S. Open - New York",
+        "Date": pd.Timestamp("2026-09-09"),
+        "Round": "Quarterfinals",
+    })
+    pd.DataFrame([base]).to_parquet(tmp_path / "seasons_wta.parquet")
+
+    patch = _match("Grand Slam", "Sabalenka A.", "Pegula J.")
+    patch.update({
+        "ATP": 16865,
+        "Tournament": "U.S. Open - New York",
+        "Date": pd.Timestamp("2026-09-10"),
+        "Round": "Semifinals",
+        "WRank": 1,
+        "LRank": 3,
+    })
+    pd.DataFrame([patch]).to_csv(tmp_path / "results_patch_wta.csv", index=False)
+    monkeypatch.setattr("src.pipeline.DATA", tmp_path)
+
+    kept = load_matches("wta")
+
+    assert kept["Date"].max().date().isoformat() == "2026-09-10"
+    assert ("Sabalenka A.", "Pegula J.") in set(zip(kept["Winner"], kept["Loser"]))
+
+
 def test_unknown_rank_gives_a_neutral_gap_not_a_fake_ranking() -> None:
     assert _log_diff(120.0, 30.0) > 0
     assert _log_diff(float("nan"), 30.0) == 0.0
@@ -44,6 +72,12 @@ def test_optional_rank_export_rejects_nan_and_zero() -> None:
     assert _opt_int(float("nan")) is None
     assert _opt_int(0) is None
     assert _opt_int(None) is None
+
+
+def test_optional_text_export_handles_pandas_missing_values() -> None:
+    assert _text_or_empty(pd.NA) == ""
+    assert _text_or_empty(np.nan) == ""
+    assert _text_or_empty("partial") == "partial"
 
 
 def test_market_blend_weight_prefers_better_calibrated_market() -> None:
