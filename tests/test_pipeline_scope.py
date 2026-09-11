@@ -3,7 +3,8 @@ import numpy as np
 import pandas as pd
 
 from src.export import _best_market_blend_weight, _opt_int, _prediction_fields
-from src.pipeline import _log1p_diff, _log_diff, build_features, load_matches
+from src.modeling import fit_probability_calibrator, probability_metrics
+from src.pipeline import FEATURES, _log1p_diff, _log_diff, _round_flags, build_features, load_matches
 
 
 def _match(series: str, winner: str, loser: str) -> dict:
@@ -58,10 +59,72 @@ def test_prediction_fields_keep_independent_model_probability_visible() -> None:
     fields = _prediction_fields("Zverev A.", "Zandschulp B.V.D.", 0.56, 0.86, 1.0)
 
     assert fields["predicted_player"] == "Zverev A."
-    assert fields["predicted_prob"] == 0.86
-    assert fields["prediction_source"] == "market_calibrated"
+    assert fields["predicted_prob"] == 0.56
+    assert fields["prediction_source"] == "independent_calibrated"
     assert fields["model_predicted_prob"] == 0.56
+    assert fields["market_calibrated_p1_win"] == 0.86
     assert fields["market_model_gap"] == 0.3
+
+
+def test_feature_list_includes_fatigue_and_context_features() -> None:
+    assert "d_tourn_sets" in FEATURES
+    assert "d_recent_games" in FEATURES
+    assert "d_rest_days" in FEATURES
+    assert "rank_both_known" in FEATURES
+    assert "level_grand_slam" in FEATURES
+    assert "round_semifinal" in FEATURES
+
+
+def test_quarterfinals_are_not_encoded_as_finals() -> None:
+    flags = _round_flags("Quarterfinals")
+
+    assert flags["round_quarterfinal"] == 1.0
+    assert flags["round_semifinal"] == 0.0
+    assert flags["round_final"] == 0.0
+
+
+def test_features_reuse_last_known_rank_when_current_row_missing() -> None:
+    first = _match("ATP", "Alpha", "Beta")
+    first.update({"Date": pd.Timestamp("2026-01-01"), "WRank": 10, "LRank": 50, "WPts": 3000, "LPts": 900})
+    second = _match("ATP", "Alpha", "Beta")
+    second.update({"Date": pd.Timestamp("2026-01-03"), "WRank": np.nan, "LRank": np.nan, "WPts": np.nan, "LPts": np.nan})
+
+    X, _, metas, _ = build_features(pd.DataFrame([first, second]))
+
+    assert X.iloc[1]["rank_both_known"] == 1.0
+    assert metas[1]["wrank"] != metas[1]["wrank"]
+    assert metas[1]["wrank_feature"] == 10.0
+
+
+def test_features_fallback_to_internal_elo_rank_when_official_rank_is_absent() -> None:
+    rows = []
+    for i in range(20):
+        match = _match("ATP", "Alpha", f"Alpha Opponent {i}")
+        match.update({"Date": pd.Timestamp("2025-01-01") + pd.Timedelta(days=i), "WRank": np.nan, "LRank": np.nan})
+        rows.append(match)
+    for i in range(20):
+        match = _match("ATP", "Beta", f"Beta Opponent {i}")
+        match.update({"Date": pd.Timestamp("2025-02-01") + pd.Timedelta(days=i), "WRank": np.nan, "LRank": np.nan})
+        rows.append(match)
+    target = _match("ATP", "Alpha", "Beta")
+    target.update({"Date": pd.Timestamp("2025-03-15"), "WRank": np.nan, "LRank": np.nan})
+    rows.append(target)
+
+    X, _, metas, _ = build_features(pd.DataFrame(rows))
+
+    assert X.iloc[-1]["rank_both_known"] == 1.0
+    assert metas[-1]["wrank_feature"] == 1.0
+    assert metas[-1]["lrank_feature"] == 2.0
+
+
+def test_probability_calibrator_improves_miscalibrated_scale() -> None:
+    y = np.array([0] * 50 + [1] * 50)
+    raw = np.array([0.30] * 25 + [0.40] * 25 + [0.60] * 25 + [0.70] * 25)
+
+    calibrator = fit_probability_calibrator(y, raw)
+    calibrated = calibrator.predict(raw)
+
+    assert probability_metrics(y, calibrated)["log_loss"] <= probability_metrics(y, raw)["log_loss"]
 
 
 def test_upcoming_keeps_only_the_tour_own_tournament_ids(tmp_path, monkeypatch) -> None:

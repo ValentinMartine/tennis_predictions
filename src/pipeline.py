@@ -54,8 +54,72 @@ def _log1p_diff(a: float, b: float) -> float:
 FEATURES = [
     "p_elo", "d_selo", "d_lrank", "d_lpts", "d_form10", "d_form25",
     "d_activity", "h2h", "h2h_count", "h2h_surface", "h2h_slam",
-    "h2h_recent", *STAT_FEATURES, "best_of", "s_hard", "s_clay", "s_grass",
+    "h2h_recent", *STAT_FEATURES,
+    "d_tourn_sets", "d_tourn_games", "d_recent_sets", "d_recent_games",
+    "d_rest_days", "rank_both_known", "pts_both_known",
+    "level_grand_slam", "level_masters", "level_500", "level_250",
+    "round_final", "round_semifinal", "round_quarterfinal",
+    "best_of", "s_hard", "s_clay", "s_grass",
 ]
+
+
+def _rest_days(player: str, last_dates: dict[str, deque], date) -> float:
+    if not last_dates[player]:
+        return 21.0
+    return float(min(21, max(0, (date - last_dates[player][-1]).days)))
+
+
+def _series_flags(series) -> dict[str, float]:
+    text = str(series or "").lower()
+    return {
+        "level_grand_slam": 1.0 if "grand slam" in text else 0.0,
+        "level_masters": 1.0 if "masters" in text or "1000" in text else 0.0,
+        "level_500": 1.0 if "500" in text else 0.0,
+        "level_250": 1.0 if "250" in text or text == "atp" or text == "wta" else 0.0,
+    }
+
+
+def _round_flags(round_name) -> dict[str, float]:
+    text = str(round_name or "").lower().replace("-", " ").replace("_", " ")
+    is_semi = "semi" in text
+    is_quarter = "quarter" in text or "quarters" in text
+    is_final = (
+        text in {"the final", "final", "finals"}
+        or text.endswith(" final")
+    ) and not is_semi and not is_quarter
+    return {
+        "round_final": 1.0 if is_final else 0.0,
+        "round_semifinal": 1.0 if is_semi else 0.0,
+        "round_quarterfinal": 1.0 if is_quarter else 0.0,
+    }
+
+
+def _elo_rank_map(elo: TennisElo, last_dates: dict[str, deque], date) -> dict[str, float]:
+    """Classement ordinal derive d'Elo pre-match, utilise seulement en feature de secours."""
+    active = [
+        (player, rating)
+        for player, rating in elo.rating.items()
+        if (
+            elo.count[player] >= 15
+            and last_dates[player]
+            and (date - last_dates[player][-1]).days <= YEAR_END_ACTIVE_DAYS
+        )
+    ]
+    active.sort(key=lambda item: -item[1])
+    return {player: float(index + 1) for index, (player, _) in enumerate(active)}
+
+
+def _rank_feature_value(
+    player: str,
+    raw_rank: float,
+    last_rank: float,
+    fallback_elo_ranks: dict[str, float],
+) -> float:
+    if _finite(raw_rank):
+        return raw_rank
+    if _finite(last_rank):
+        return last_rank
+    return _finite_or_nan(fallback_elo_ranks.get(player))
 
 
 def load_matches(tour: str = "atp") -> pd.DataFrame:
@@ -118,7 +182,16 @@ def _recent_share_for_player(outcomes: deque, pair: tuple[str, str], player: str
     return sum(1 for outcome in outcomes if outcome == side) / len(outcomes) - 0.5
 
 
-def upcoming_features(state: dict, p1: str, p2: str, surface: str, best_of: int, date) -> dict:
+def upcoming_features(
+    state: dict,
+    p1: str,
+    p2: str,
+    surface: str,
+    best_of: int,
+    date,
+    series=None,
+    round_name=None,
+) -> dict:
     """Features d'un match non joué, à partir de l'état laissé par `build_features`.
 
     Mêmes expressions que la boucle d'entraînement, avec l'état arrêté au dernier match
@@ -128,6 +201,7 @@ def upcoming_features(state: dict, p1: str, p2: str, surface: str, best_of: int,
     recent, last_dates = state["recent"], state["last_dates"]
     rank, pts = state["rank"], state["pts"]
     surface = norm_surface(surface)
+    fallback_elo_ranks = _elo_rank_map(elo, last_dates, date)
 
     def form(player, n):
         window = list(recent[player])[-n:]
@@ -140,11 +214,17 @@ def upcoming_features(state: dict, p1: str, p2: str, surface: str, best_of: int,
     counts = state["h2h"][key]
     total = counts[0] + counts[1]
     sackmann = state["sackmann"]
+    p1_r_sets = p1_r_games = p2_r_sets = p2_r_games = 0
+    p1_t_sets = p1_t_games = p2_t_sets = p2_t_games = 0
+    r1 = _rank_feature_value(p1, NA, _finite_or_nan(rank.get(p1)), fallback_elo_ranks)
+    r2 = _rank_feature_value(p2, NA, _finite_or_nan(rank.get(p2)), fallback_elo_ranks)
+    q1 = _finite_or_nan(pts.get(p1))
+    q2 = _finite_or_nan(pts.get(p2))
     return {
         "p_elo": elo.prob(p1, p2, surface),
         "d_selo": (elo.surf[surface][p1] - elo.surf[surface][p2]) / 100.0,
-        "d_lrank": _log_diff(_finite_or_nan(rank.get(p2)), _finite_or_nan(rank.get(p1))),
-        "d_lpts": _log1p_diff(_finite_or_nan(pts.get(p1)), _finite_or_nan(pts.get(p2))),
+        "d_lrank": _log_diff(r2, r1),
+        "d_lpts": _log1p_diff(q1, q2),
         "d_form10": form(p1, 10) - form(p2, 10),
         "d_form25": form(p1, 25) - form(p2, 25),
         "d_activity": (activity(p1) - activity(p2)) / 10.0,
@@ -154,6 +234,15 @@ def upcoming_features(state: dict, p1: str, p2: str, surface: str, best_of: int,
         "h2h_slam": _share_for_player(state["h2h_slam"][key], key, p1),
         "h2h_recent": _recent_share_for_player(state["h2h_recent"][key], key, p1),
         **sackmann.diff_features(p1, p2),
+        "d_tourn_sets": (p1_t_sets - p2_t_sets) / 10.0,
+        "d_tourn_games": (p1_t_games - p2_t_games) / 100.0,
+        "d_recent_sets": (p1_r_sets - p2_r_sets) / 20.0,
+        "d_recent_games": (p1_r_games - p2_r_games) / 200.0,
+        "d_rest_days": (_rest_days(p1, last_dates, date) - _rest_days(p2, last_dates, date)) / 21.0,
+        "rank_both_known": 1.0 if _finite(r1) and _finite(r2) else 0.0,
+        "pts_both_known": 1.0 if _finite(q1) and _finite(q2) else 0.0,
+        **_series_flags(series),
+        **_round_flags(round_name),
         "best_of": 1.0 if float(best_of or 3) >= 5 else 0.0,
         "s_hard": 1.0 if surface == "Hard" else 0.0,
         "s_clay": 1.0 if surface == "Clay" else 0.0,
@@ -243,10 +332,22 @@ def build_features(allm: pd.DataFrame):
         # Classement et points absents : rester à NaN plutôt que d'inventer un 250 commun.
         # Un défaut constant annule d_lrank/d_lpts sur toute la période concernée et crée
         # un décalage entraînement/test invisible ; LightGBM gère nativement les NaN.
-        wr = _num(m.get("WRank"), NA)
-        lr = _num(m.get("LRank"), NA)
-        wp = _num(m.get("WPts"), NA)
-        lp = _num(m.get("LPts"), NA)
+        wr_raw = _num(m.get("WRank"), NA)
+        lr_raw = _num(m.get("LRank"), NA)
+        wp_raw = _num(m.get("WPts"), NA)
+        lp_raw = _num(m.get("LPts"), NA)
+        needs_elo_rank_fallback = (
+            not _finite(wr_raw)
+            and not _finite(_finite_or_nan(rank.get(w)))
+        ) or (
+            not _finite(lr_raw)
+            and not _finite(_finite_or_nan(rank.get(l)))
+        )
+        fallback_elo_ranks = _elo_rank_map(elo, last_dates, date) if needs_elo_rank_fallback else {}
+        wr = _rank_feature_value(w, wr_raw, _finite_or_nan(rank.get(w)), fallback_elo_ranks)
+        lr = _rank_feature_value(l, lr_raw, _finite_or_nan(rank.get(l)), fallback_elo_ranks)
+        wp = wp_raw if _finite(wp_raw) else _finite_or_nan(pts.get(w))
+        lp = lp_raw if _finite(lp_raw) else _finite_or_nan(pts.get(l))
 
         p1_win = _p1_is_winner(date, w, l)
         p1, p2 = (w, l) if p1_win else (l, w)
@@ -300,6 +401,11 @@ def build_features(allm: pd.DataFrame):
             "d_tourn_games": (p1_t_games - p2_t_games) / 100.0,
             "d_recent_sets": (p1_r_sets - p2_r_sets) / 20.0,
             "d_recent_games": (p1_r_games - p2_r_games) / 200.0,
+            "d_rest_days": (_rest_days(p1, last_dates, date) - _rest_days(p2, last_dates, date)) / 21.0,
+            "rank_both_known": 1.0 if _finite(r1) and _finite(r2) else 0.0,
+            "pts_both_known": 1.0 if _finite(q1) and _finite(q2) else 0.0,
+            **_series_flags(m.get("Series")),
+            **_round_flags(m.get("Round")),
             "best_of": 1.0 if float(m.get("Best of", 3) or 3) >= 5 else 0.0,
             "s_hard": 1.0 if surface == "Hard" else 0.0,
             "s_clay": 1.0 if surface == "Clay" else 0.0,
@@ -310,7 +416,8 @@ def build_features(allm: pd.DataFrame):
         metas.append({
             "date": date, "tournament": m.get("Tournament"), "series": m.get("Series"),
             "surface": surface, "round": m.get("Round"), "best_of": m.get("Best of"),
-            "winner": w, "loser": l, "wrank": wr, "lrank": lr,
+            "winner": w, "loser": l, "wrank": wr_raw, "lrank": lr_raw,
+            "wrank_feature": wr, "lrank_feature": lr,
             "p1": p1, "p2": p2,
             "avgw": m.get("AvgW"), "avgl": m.get("AvgL"),
             "score": _score_str(m),
@@ -347,8 +454,14 @@ def build_features(allm: pd.DataFrame):
         tournament_load[event_key][l][1] += games_played
         recent_load[w].append((date, sets_played, games_played))
         recent_load[l].append((date, sets_played, games_played))
-        rank[w], rank[l] = wr, lr
-        pts[w], pts[l] = wp, lp
+        if _finite(wr_raw):
+            rank[w] = wr_raw
+        if _finite(lr_raw):
+            rank[l] = lr_raw
+        if _finite(wp_raw):
+            pts[w] = wp_raw
+        if _finite(lp_raw):
+            pts[l] = lp_raw
 
     if cur_year is not None:
         year_end[cur_year] = _snapshot_top(date)  # année en cours = état actuel
