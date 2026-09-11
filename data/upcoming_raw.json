@@ -1,5 +1,5 @@
 {
- "fetched_at": "2026-09-11T07:20:18+00:00",
+ "fetched_at": "2026-09-11T08:27:36+00:00",
  "source": "https://www.valuebetennis.com/matchs-a-venir.htm",
  "error": null,
  "matches": [
@@ -173,7 +173,7 @@
   },
   {
    "date": "2026-09-11",
-   "time": "10:30",
+   "time": "10:35",
    "tournament_id": 16910,
    "tournament": "Shanghai Challenger",
    "surface": "Hard",
@@ -271,21 +271,7 @@
   },
   {
    "date": "2026-09-11",
-   "time": "11:00",
-   "tournament_id": 16924,
-   "tournament": "Istanbul Challenger",
-   "surface": "Hard",
-   "round": "Quarterfinals",
-   "player1": "Dimitar Kuzmanov",
-   "player2": "Harold Mayot",
-   "rank1": 382,
-   "rank2": 267,
-   "odds1": 2.68,
-   "odds2": 1.51
-  },
-  {
-   "date": "2026-09-11",
-   "time": "11:00",
+   "time": "11:03",
    "tournament_id": 16924,
    "tournament": "Istanbul Challenger",
    "surface": "Hard",
@@ -296,6 +282,20 @@
    "rank2": 195,
    "odds1": 3.01,
    "odds2": 1.42
+  },
+  {
+   "date": "2026-09-11",
+   "time": "11:05",
+   "tournament_id": 16924,
+   "tournament": "Istanbul Challenger",
+   "surface": "Hard",
+   "round": "Quarterfinals",
+   "player1": "Dimitar Kuzmanov",
+   "player2": "Harold Mayot",
+   "rank1": 382,
+   "rank2": 267,
+   "odds1": 2.68,
+   "odds2": 1.51
   },
   {
    "date": "2026-09-11",
@@ -369,7 +369,7 @@
   },
   {
    "date": "2026-09-11",
-   "time": "12:35",
+   "time": "12:43",
    "tournament_id": 16935,
    "tournament": "W35 Reus",
    "surface": "Clay",
@@ -397,7 +397,7 @@
   },
   {
    "date": "2026-09-11",
-   "time": "12:35",
+   "time": "12:52",
    "tournament_id": 16943,
    "tournament": "W15 Radom",
    "surface": "Clay",
@@ -660,62 +660,6 @@
    "rank2": 563,
    "odds1": 1.8,
    "odds2": 1.96
-  },
-  {
-   "date": "2026-09-11",
-   "time": "12:35",
-   "tournament_id": 16934,
-   "tournament": "M15 Budapest",
-   "surface": "Clay",
-   "round": "Quarterfinals",
-   "player1": "Mate Valkusz",
-   "player2": "Bruno Fernandez",
-   "rank1": 758,
-   "rank2": 648,
-   "odds1": 1.3,
-   "odds2": 3.38
-  },
-  {
-   "date": "2026-09-11",
-   "time": "12:35",
-   "tournament_id": 16934,
-   "tournament": "M15 Budapest",
-   "surface": "Clay",
-   "round": "Quarterfinals",
-   "player1": "Lilian Marmousez",
-   "player2": "Orel Kimhi",
-   "rank1": 512,
-   "rank2": 729,
-   "odds1": 1.15,
-   "odds2": 4.99
-  },
-  {
-   "date": "2026-09-11",
-   "time": "12:35",
-   "tournament_id": 16934,
-   "tournament": "M15 Budapest",
-   "surface": "Clay",
-   "round": "Quarterfinals",
-   "player1": "John Sperle",
-   "player2": "Gabriele Maria Noce",
-   "rank1": 831,
-   "rank2": 801,
-   "odds1": 1.3,
-   "odds2": 3.26
-  },
-  {
-   "date": "2026-09-11",
-   "time": "12:35",
-   "tournament_id": 16934,
-   "tournament": "M15 Budapest",
-   "surface": "Clay",
-   "round": "Quarterfinals",
-   "player1": "Jan Kupcic",
-   "player2": "Tobia Costanzo Baragiola Mordini",
-   "rank1": null,
-   "rank2": null,
-   "odds1": 1.65,
-   "odds2": 2.19
   },
   {
    "date": "2026-09-11",
@@ -996,6 +940,62 @@
    "rank2": 304,
    "odds1": 1.71,
    "odds2": 2.15
+  },
+  {
+   "date": "2026-09-11",
+   "time": "14:05",
+   "tournament_id": 16934,
+   "tournament": "M15 Budapest",
+   "surface": "Clay",
+   "round": "Quarterfinals",
+   "player1": "Mate Valkusz",
+   "player2": "Bruno Fernandez",
+   "rank1": 758,
+   "rank2": 648,
+   "odds1": 1.3,
+   "odds2": 3.38
+  },
+  {
+   "date": "2026-09-11",
+   "time": "14:05",
+   "tournament_id": 16934,
+   "tournament": "M15 Budapest",
+   "surface": "Clay",
+   "round": "Quarterfinals",
+   "player1": "Lilian Marmousez",
+   "player2": "Orel Kimhi",
+   "rank1": 512,
+   "rank2": 729,
+   "odds1": 1.15,
+   "odds2": 4.99
+  },
+  {
+   "date": "2026-09-11",
+   "time": "14:05",
+   "tournament_id": 16934,
+   "tournament": "M15 Budapest",
+   "surface": "Clay",
+   "round": "Quarterfinals",
+   "player1": "John Sperle",
+   "player2": "Gabriele Maria Noce",
+   "rank1": 831,
+   "rank2": 801,
+   "odds1": 1.3,
+   "odds2": 3.26
+  },
+  {
+   "date": "2026-09-11",
+   "time": "14:05",
+   "tournament_id": 16934,
+   "tournament": "M15 Budapest",
+   "surface": "Clay",
+   "round": "Quarterfinals",
+   "player1": "Jan Kupcic",
+   "player2": "Tobia Costanzo Baragiola Mordini",
+   "rank1": null,
+   "rank2": null,
+   "odds1": 1.65,
+   "odds2": 2.19
   },
   {
    "date": "2026-09-11",
