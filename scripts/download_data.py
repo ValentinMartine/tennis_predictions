@@ -33,6 +33,7 @@ TOURS = {
         "genre": "atp",
         "mirrors": (
             "https://raw.githubusercontent.com/JeffSackmann/tennis_atp/master/atp_matches_{y}.csv",
+            "https://raw.githubusercontent.com/Aneeshers/tennis-sackmann-archive/main/atp/atp_matches_{y}.csv",
             "https://raw.githubusercontent.com/azhou5849/tennis-atp-sackmann-data/master/atp_matches_{y}.csv",
             "https://raw.githubusercontent.com/beta2k/tennis_atp/master/atp_matches_{y}.csv",
             "https://raw.githubusercontent.com/FerrisPhilippi/tennis_atp_data/master/atp_matches_{y}.csv",
@@ -45,6 +46,7 @@ TOURS = {
         "genre": "wta",
         "mirrors": (
             "https://raw.githubusercontent.com/JeffSackmann/tennis_wta/master/wta_matches_{y}.csv",
+            "https://raw.githubusercontent.com/Aneeshers/tennis-sackmann-archive/main/wta/wta_matches_{y}.csv",
             "https://raw.githubusercontent.com/azhou5849/tennis-wta-sackmann-data/master/wta_matches_{y}.csv",
         ),
     },
@@ -116,6 +118,12 @@ def _name_key(text: object) -> str:
     return "".join(c for c in folded.lower() if c.isalnum())
 
 
+def _tournament_key(text: object) -> str:
+    """Loose tournament key shared by Valuebetennis and Sackmann labels."""
+    head = str(text or "").split("-", 1)[0]
+    return _name_key(head)
+
+
 _SEASON_NAMES_CACHE: dict[tuple[str, int | None], dict[str, dict[str, str]]] = {}
 
 
@@ -164,6 +172,23 @@ def short_name_from_full(name: object, surnames: dict[str, dict[str, str]]) -> s
         if not choices:
             continue
         initials = _initials(tokens[:split])
+        if initials in choices:
+            return choices[initials]
+        same_first_initial = [
+            short for known_initials, short in choices.items()
+            if known_initials[:1] == initials[:1]
+        ]
+        if len(same_first_initial) == 1:
+            return same_first_initial[0]
+
+    # Certains flux écrivent plusieurs noms de famille ("Jaume Antoni Munar Clar")
+    # alors que tennis-data/Sackmann n'en gardent qu'un ("Munar J.").
+    for surname_index in range(len(tokens) - 2, 0, -1):
+        surname_key = _name_key(tokens[surname_index])
+        choices = surnames.get(surname_key)
+        if not choices:
+            continue
+        initials = _initials(tokens[:surname_index])
         if initials in choices:
             return choices[initials]
         same_first_initial = [
@@ -265,6 +290,105 @@ def score_columns(score: object) -> dict[str, int | None]:
     values["Wsets"] = winner_sets or None
     values["Lsets"] = loser_sets or None
     return values
+
+
+def complete_set_count(values: dict[str, int | None]) -> int:
+    """Count fully parsed sets in tennis-data compatible score columns."""
+    return sum(
+        values.get(f"W{index}") is not None and values.get(f"L{index}") is not None
+        for index in range(1, 6)
+    )
+
+
+def score_is_decisive(values: dict[str, int | None], best_of: object) -> bool:
+    """Return True when the score gives the announced winner enough sets."""
+    try:
+        best = int(float(best_of))
+    except (TypeError, ValueError):
+        best = 3
+    target_sets = 3 if best >= 5 else 2
+    winner_sets = int(values.get("Wsets") or 0)
+    loser_sets = int(values.get("Lsets") or 0)
+    return winner_sets >= target_sets and winner_sets > loser_sets
+
+
+def read_sackmann_raw(year: int, tour: str) -> tuple[pd.DataFrame, str]:
+    """Read the first available Sackmann-format mirror for a season."""
+    required = {"tourney_date", "winner_name", "loser_name", "score"}
+    last_error: Exception | None = None
+    for url_template in TOURS[tour]["mirrors"]:
+        url = url_template.format(y=year)
+        try:
+            raw = pd.read_csv(url)
+        except Exception as exc:  # noqa: BLE001
+            last_error = exc
+            continue
+        if required.issubset(raw.columns):
+            return raw, url
+    if last_error is not None:
+        raise last_error
+    raise RuntimeError(f"No Sackmann fallback URL configured for {tour} {year}")
+
+
+def sackmann_score_repairs(
+    year: int,
+    tour: str,
+    surnames: dict[str, dict[str, str]],
+) -> dict[tuple[str, str, str], dict[str, int | None]]:
+    """Build conservative score repairs for Valuebetennis partial scores."""
+    try:
+        raw, _ = read_sackmann_raw(year, tour)
+    except Exception:  # noqa: BLE001
+        return {}
+
+    repairs: dict[tuple[str, str, str], dict[str, int | None]] = {}
+    pair_repairs: dict[tuple[str, str], list[dict[str, int | None]]] = {}
+    for _, match in raw.iterrows():
+        match_date = pd.to_datetime(str(match.get("tourney_date")), format="%Y%m%d", errors="coerce")
+        if pd.isna(match_date):
+            continue
+        values = score_columns(match.get("score"))
+        if not score_is_decisive(values, match.get("best_of", 3)):
+            continue
+        winner = short_name_from_full(match.get("winner_name"), surnames)
+        loser = short_name_from_full(match.get("loser_name"), surnames)
+        if winner and loser:
+            repairs[(f"date:{match_date.date().isoformat()}", winner, loser)] = values
+            tournament_key = _tournament_key(match.get("tourney_name"))
+            if tournament_key:
+                repairs[(f"tournament:{tournament_key}", winner, loser)] = values
+            pair_repairs.setdefault((winner, loser), []).append(values)
+    for (winner, loser), candidates in pair_repairs.items():
+        if len(candidates) == 1:
+            repairs[("pair", winner, loser)] = candidates[0]
+    return repairs
+
+
+def maybe_repair_score_from_sackmann(
+    score_frame: dict[str, int | None],
+    match_date: object,
+    tournament: object,
+    winner: str,
+    loser: str,
+    repairs: dict[tuple[str, str, str], dict[str, int | None]],
+) -> tuple[dict[str, int | None], bool, int]:
+    """Replace a partial Valuebetennis score with a complete Sackmann score when possible."""
+    partial_score = bool(score_frame.pop("_partial", False))
+    complete_sets = int(score_frame.pop("_complete_sets", 0) or 0)
+    if partial_score:
+        parsed_date = pd.to_datetime(match_date, errors="coerce")
+        keys: list[tuple[str, str, str]] = []
+        if not pd.isna(parsed_date):
+            keys.append((f"date:{parsed_date.date().isoformat()}", winner, loser))
+        tournament_key = _tournament_key(tournament)
+        if tournament_key:
+            keys.append((f"tournament:{tournament_key}", winner, loser))
+        keys.append(("pair", winner, loser))
+        for key in keys:
+            repaired = repairs.get(key)
+            if repaired:
+                return dict(repaired), False, complete_set_count(repaired)
+    return score_frame, partial_score, complete_sets
 
 
 def valuebetennis_surface(surface: object) -> str:
@@ -392,6 +516,7 @@ def download_valuebetennis_fallback(year: int, destination: Path, tour: str = "a
     raw = raw.dropna(subset=["Date", "joueur1", "joueur2", "vainqueur_id", "score"])
 
     surnames = known_surnames(exclude_year=year, tour=tour)
+    score_repairs = sackmann_score_repairs(year, tour, surnames)
     rows = []
     for _, match in raw.iterrows():
         winner_is_player1 = str(match["vainqueur_id"]) == str(match["joueur1_id"])
@@ -401,10 +526,17 @@ def download_valuebetennis_fallback(year: int, destination: Path, tour: str = "a
         if round_label in QUALIFYING_ROUNDS:
             continue
         score_frame = score_columns_from_valuebetennis(match["score"], winner_is_player1)
-        partial_score = score_frame.pop("_partial", False)
+        score_frame, partial_score, complete_sets = maybe_repair_score_from_sackmann(
+            score_frame,
+            match["Date"],
+            match["tournoi"],
+            winner,
+            loser,
+            score_repairs,
+        )
         # Un abandon au premier set reste un résultat : il suffit d'un set terminé pour
         # que le match compte. Sans set exploitable, la ligne n'apporte rien.
-        if score_frame.pop("_complete_sets", 0) < 1:
+        if complete_sets < 1:
             continue
         avg_w = match["cote1_cloture"] if winner_is_player1 else match["cote2_cloture"]
         avg_l = match["cote2_cloture"] if winner_is_player1 else match["cote1_cloture"]
@@ -440,18 +572,7 @@ def download_valuebetennis_fallback(year: int, destination: Path, tour: str = "a
 
 def download_sackmann_fallback(year: int, destination: Path, tour: str = "atp") -> str:
     """Build a tennis-data compatible Excel file from a public CSV mirror."""
-    last_error: Exception | None = None
-    for url_template in TOURS[tour]["mirrors"]:
-        url = url_template.format(y=year)
-        try:
-            raw = pd.read_csv(url)
-            break
-        except Exception as exc:  # noqa: BLE001
-            last_error = exc
-    else:
-        if last_error is not None:
-            raise last_error
-        raise RuntimeError(f"No Sackmann fallback URL configured for {tour} {year}")
+    raw, url = read_sackmann_raw(year, tour)
 
     surnames = known_surnames(exclude_year=year, tour=tour)
     converted = pd.DataFrame(

@@ -1,5 +1,5 @@
 {
-  "checked_at": "2026-09-11T11:13:52+00:00",
+  "checked_at": "2026-09-11T09:04:16+00:00",
   "tour": "atp",
   "primary_source": "tennis-data.co.uk",
   "fresh_csv_fallback": "Valuebetennis",
@@ -7,6 +7,7 @@
   "current_year_max_staleness_days": 3,
   "fallback_sources": [
     "https://raw.githubusercontent.com/JeffSackmann/tennis_atp/master/atp_matches_{y}.csv",
+    "https://raw.githubusercontent.com/Aneeshers/tennis-sackmann-archive/main/atp/atp_matches_{y}.csv",
     "https://raw.githubusercontent.com/azhou5849/tennis-atp-sackmann-data/master/atp_matches_{y}.csv",
     "https://raw.githubusercontent.com/beta2k/tennis_atp/master/atp_matches_{y}.csv",
     "https://raw.githubusercontent.com/FerrisPhilippi/tennis_atp_data/master/atp_matches_{y}.csv",
@@ -202,7 +203,7 @@
       "ok": true,
       "url": "https://www.valuebetennis.com/datasets/valuebetennis-matchs-2026.csv",
       "latest_match_date": "2026-09-10",
-      "rows": 1976,
+      "rows": 1981,
       "primary_error": "HTTP Error 503: Service Temporarily Unavailable",
       "error": null
     }

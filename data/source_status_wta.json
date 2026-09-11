@@ -1,5 +1,5 @@
 {
-  "checked_at": "2026-09-11T11:14:16+00:00",
+  "checked_at": "2026-09-11T09:05:21+00:00",
   "tour": "wta",
   "primary_source": "tennis-data.co.uk",
   "fresh_csv_fallback": "Valuebetennis",
@@ -7,6 +7,7 @@
   "current_year_max_staleness_days": 3,
   "fallback_sources": [
     "https://raw.githubusercontent.com/JeffSackmann/tennis_wta/master/wta_matches_{y}.csv",
+    "https://raw.githubusercontent.com/Aneeshers/tennis-sackmann-archive/main/wta/wta_matches_{y}.csv",
     "https://raw.githubusercontent.com/azhou5849/tennis-wta-sackmann-data/master/wta_matches_{y}.csv"
   ],
   "records": [
@@ -198,7 +199,7 @@
       "ok": true,
       "url": "https://www.valuebetennis.com/datasets/valuebetennis-matchs-2026.csv",
       "latest_match_date": "2026-09-09",
-      "rows": 1856,
+      "rows": 1868,
       "primary_error": "HTTP Error 503: Service Temporarily Unavailable",
       "error": null
     }

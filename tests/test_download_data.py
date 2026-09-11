@@ -6,6 +6,8 @@ from scripts.download_data import (
     MAIN_TOUR_SERIES,
     is_finished_set,
     known_surnames,
+    maybe_repair_score_from_sackmann,
+    sackmann_score_repairs,
     score_columns,
     series_from_sackmann_level,
     score_columns_from_valuebetennis,
@@ -124,12 +126,14 @@ def test_full_names_are_mapped_onto_the_short_convention() -> None:
         "delpotro": {"J.M.": "Del Potro J.M."},
         "fritz": {"T.": "Fritz T."},
         "lee": {"M.": "Lee M.", "H.T.": "Lee H.T."},
+        "munar": {"J.": "Munar J."},
     }
 
     assert short_name_from_full("Jannik Sinner", surnames) == "Sinner J."
     assert short_name_from_full("Felix Auger Aliassime", surnames) == "Auger-Aliassime F."
     assert short_name_from_full("Alex De Minaur", surnames) == "De Minaur A."
     assert short_name_from_full("Juan Martin Del Potro", surnames) == "Del Potro J.M."
+    assert short_name_from_full("Jaume Antoni Munar Clar", surnames) == "Munar J."
     # Le deuxième prénom ne doit pas créer un joueur parallèle « Fritz T.H. ».
     assert short_name_from_full("Taylor Harry Fritz", surnames) == "Fritz T."
     assert short_name_from_full("Hyung Taik Lee", surnames) == "Lee H.T."
@@ -196,3 +200,65 @@ def test_a_retirement_in_the_first_sets_stays_a_result() -> None:
     assert values["_complete_sets"] == 1
     assert values["_partial"] is True
     assert values["Wsets"] == 1 and values["Lsets"] is None
+
+
+def test_sackmann_score_repairs_provide_complete_scores(monkeypatch) -> None:
+    raw = pd.DataFrame({
+        "tourney_date": [20260901],
+        "winner_name": ["Alexander Zverev"],
+        "loser_name": ["Botic Van De Zandschulp"],
+        "score": ["6-4 3-6 7-5 6-3"],
+        "best_of": [5],
+    })
+    monkeypatch.setattr(pd, "read_csv", lambda *_args, **_kwargs: raw)
+    surnames = {
+        "zverev": {"A.": "Zverev A."},
+        "vandezandschulp": {"B.": "Zandschulp B.V.D."},
+        "zandschulp": {"B.V.D.": "Zandschulp B.V.D."},
+    }
+
+    repairs = sackmann_score_repairs(2026, "atp", surnames)
+
+    fixed = repairs[("date:2026-09-01", "Zverev A.", "Zandschulp B.V.D.")]
+    assert fixed["W4"] == 6
+    assert fixed["L4"] == 3
+    assert fixed["Wsets"] == 3
+    assert fixed["Lsets"] == 1
+
+
+def test_partial_valuebetennis_score_is_repaired_from_sackmann() -> None:
+    score = score_columns_from_valuebetennis("6-4 3-6 7-5 5-5", winner_is_player1=True)
+    repaired = score_columns("6-4 3-6 7-5 6-3")
+
+    fixed, partial, complete_sets = maybe_repair_score_from_sackmann(
+        score,
+        "2026-09-01",
+        "US Open - New York",
+        "Zverev A.",
+        "Zandschulp B.V.D.",
+        {("date:2026-09-01", "Zverev A.", "Zandschulp B.V.D."): repaired},
+    )
+
+    assert partial is False
+    assert complete_sets == 4
+    assert fixed["W4"] == 6
+    assert fixed["L4"] == 3
+
+
+def test_partial_valuebetennis_score_can_be_repaired_by_tournament_key() -> None:
+    score = score_columns_from_valuebetennis("4-6 5-5", winner_is_player1=False)
+    repaired = score_columns("6-4 7-5")
+
+    fixed, partial, complete_sets = maybe_repair_score_from_sackmann(
+        score,
+        "2026-01-03",
+        "United Cup - Australia",
+        "Baez S.",
+        "Fritz T.",
+        {("tournament:unitedcup", "Baez S.", "Fritz T."): repaired},
+    )
+
+    assert partial is False
+    assert complete_sets == 2
+    assert fixed["W2"] == 7
+    assert fixed["L2"] == 5

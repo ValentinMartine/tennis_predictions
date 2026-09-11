@@ -41,10 +41,9 @@ Les fichiers WTA portent le suffixe `_wta` ; ceux de l'ATP gardent leur nom d'or
   l'US Open 2026). Le filtrage par nom faisait entrer les quarts de finale WTA dans l'export
   ATP, où les joueuses inconnues du modèle donnaient des probabilités à 50 %. Contrepartie
   assumée : un tournoi sans match terminé cette saison n'est pas encore reconnu.
-- **Scores tronqués : les signaler, pas les corriger.** Valuebetennis coupe le dernier set
-  d'un match sur huit (« 5-7 3-6 7-5 6-3 5-5 »). Les sets inachevés sont écartés du décompte,
-  le match porte `ScoreStatus = partial` et le site affiche un astérisque. Sans ce marquage,
-  157 matchs de la saison 2026 affichaient un score qui contredisait le vainqueur annoncé.
+- **Scores tronqués : réparer d'abord, signaler seulement si besoin.** Valuebetennis coupe parfois
+  le dernier set. Le pipeline cherche alors le même match dans les miroirs Sackmann ; si le score y
+  est complet, il remplace la version Valuebetennis. Sinon le match garde `ScoreStatus = partial`.
 - **Le classement du site liste les joueurs actifs sur 12 mois glissants**, pas sur la fenêtre
   comparée. Exiger un match dans la fenêtre sortait le numéro un mondial dès qu'il ne jouait
   pas ce mois-là (Alcaraz premier en août 2026 parce que Sinner n'avait pas rejoué depuis
