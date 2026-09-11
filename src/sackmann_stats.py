@@ -1,7 +1,7 @@
-"""Jeff Sackmann ATP match statistics.
+"""Jeff Sackmann ATP/WTA match statistics.
 
 The tennis-data.co.uk files used by the main pipeline contain results, ranks and odds,
-but not serve/return details. Jeff Sackmann's ATP match CSVs add tour-level match
+but not serve/return details. Jeff Sackmann's match CSVs add tour-level match
 stats such as aces, double faults, service points and break points.
 """
 from __future__ import annotations
@@ -19,7 +19,16 @@ import requests
 ROOT = Path(__file__).resolve().parents[1]
 DATA = ROOT / "data"
 CACHE_DIR = DATA / "sackmann"
-URL = "https://raw.githubusercontent.com/JeffSackmann/tennis_atp/refs/heads/master/atp_matches_{year}.csv"
+URLS = {
+    "atp": [
+        "https://raw.githubusercontent.com/JeffSackmann/tennis_atp/refs/heads/master/atp_matches_{year}.csv",
+        "https://raw.githubusercontent.com/Aneeshers/tennis-sackmann-archive/main/atp/atp_matches_{year}.csv",
+    ],
+    "wta": [
+        "https://raw.githubusercontent.com/JeffSackmann/tennis_wta/refs/heads/master/wta_matches_{year}.csv",
+        "https://raw.githubusercontent.com/Aneeshers/tennis-sackmann-archive/main/wta/wta_matches_{year}.csv",
+    ],
+}
 
 STAT_FEATURES = [
     "d_srv_pts_won",
@@ -83,22 +92,32 @@ def make_player_mapper(existing_players: set[str] | None = None):
     return mapper
 
 
-def download_match_stats(start_year: int = 2000, end_year: int | None = None, force: bool = False) -> list[Path]:
-    """Download Sackmann yearly ATP match-stat CSVs into data/sackmann."""
+def download_match_stats(
+    start_year: int = 2000,
+    end_year: int | None = None,
+    force: bool = False,
+    tour: str = "atp",
+) -> list[Path]:
+    """Download Sackmann yearly match-stat CSVs into data/sackmann."""
+    tour = tour.lower()
+    if tour not in URLS:
+        raise ValueError(f"Unsupported tour: {tour}")
     end_year = end_year or datetime.now().year
     CACHE_DIR.mkdir(parents=True, exist_ok=True)
     paths: list[Path] = []
     for year in range(start_year, end_year + 1):
-        out = CACHE_DIR / f"atp_matches_{year}.csv"
+        out = CACHE_DIR / f"{tour}_matches_{year}.csv"
         if out.exists() and not force:
             paths.append(out)
             continue
-        response = requests.get(URL.format(year=year), timeout=30)
-        if response.status_code == 404:
-            continue
-        response.raise_for_status()
-        out.write_bytes(response.content)
-        paths.append(out)
+        for template in URLS[tour]:
+            response = requests.get(template.format(year=year), timeout=30)
+            if response.status_code == 404:
+                continue
+            response.raise_for_status()
+            out.write_bytes(response.content)
+            paths.append(out)
+            break
     return paths
 
 
@@ -106,12 +125,14 @@ def load_match_stats(
     existing_players: set[str] | None = None,
     start_year: int = 2000,
     end_year: int | None = None,
+    tour: str = "atp",
 ) -> pd.DataFrame:
     """Load cached Sackmann match-stat CSVs and normalize names to tennis-data format."""
+    tour = tour.lower()
     end_year = end_year or datetime.now().year
     frames = []
     for year in range(start_year, end_year + 1):
-        path = CACHE_DIR / f"atp_matches_{year}.csv"
+        path = CACHE_DIR / f"{tour}_matches_{year}.csv"
         if path.exists():
             frames.append(pd.read_csv(path, low_memory=False))
     if not frames:
@@ -261,8 +282,8 @@ class RollingSackmannStats:
     stats: dict[str, StatAccumulator] = field(default_factory=lambda: defaultdict(StatAccumulator))
 
     @classmethod
-    def from_cache(cls, existing_players: set[str] | None = None) -> "RollingSackmannStats":
-        return cls(load_match_stats(existing_players=existing_players))
+    def from_cache(cls, existing_players: set[str] | None = None, tour: str = "atp") -> "RollingSackmannStats":
+        return cls(load_match_stats(existing_players=existing_players, tour=tour))
 
     def advance_before(self, date) -> None:
         if self.matches.empty:

@@ -53,9 +53,12 @@ def _log1p_diff(a: float, b: float) -> float:
 
 FEATURES = [
     "p_elo", "d_selo", "d_lrank", "d_lpts", "d_form10", "d_form25",
+    "d_surface_form10", "d_surface_form25", "d_season_winrate", "d_season_matches",
+    "d_win_streak", "d_loss_streak", "d_best_of5_winrate", "d_slam_winrate",
     "d_activity", "h2h", "h2h_count", "h2h_surface", "h2h_slam",
     "h2h_recent", *STAT_FEATURES,
     "d_tourn_sets", "d_tourn_games", "d_recent_sets", "d_recent_games",
+    "d_retirement_365", "d_recent_retirement",
     "d_rest_days", "rank_both_known", "pts_both_known",
     "level_grand_slam", "level_masters", "level_500", "level_250",
     "round_final", "round_semifinal", "round_quarterfinal",
@@ -141,6 +144,7 @@ def load_matches(tour: str = "atp") -> pd.DataFrame:
         allm = allm[~allm["Series"].astype(str).isin(OUT_OF_SCOPE_SERIES)]
     allm = allm.dropna(subset=["Winner", "Loser"])
     allm = allm.sort_values(["Date", "ATP", "Round"]).reset_index(drop=True)
+    allm.attrs["tour"] = tour
     # patch résultats récents (Sofascore) éventuel
     patch = DATA / ("results_patch.csv" if tour == "atp" else f"results_patch_{tour}.csv")
     if patch.exists():
@@ -182,6 +186,15 @@ def _recent_share_for_player(outcomes: deque, pair: tuple[str, str], player: str
     return sum(1 for outcome in outcomes if outcome == side) / len(outcomes) - 0.5
 
 
+def _win_rate(outcomes, default: float = 0.5) -> float:
+    values = list(outcomes)
+    return sum(values) / len(values) if values else default
+
+
+def _count_since(dates, date, days: int) -> int:
+    return sum(1 for d in dates if 0 <= (date - d).days <= days)
+
+
 def upcoming_features(
     state: dict,
     p1: str,
@@ -191,6 +204,10 @@ def upcoming_features(
     date,
     series=None,
     round_name=None,
+    tournament_id=None,
+    tournament=None,
+    rank1=None,
+    rank2=None,
 ) -> dict:
     """Features d'un match non joué, à partir de l'état laissé par `build_features`.
 
@@ -199,6 +216,15 @@ def upcoming_features(
     """
     elo = state["elo"]
     recent, last_dates = state["recent"], state["last_dates"]
+    surface_recent = state.get("surface_recent", {})
+    season_recent = state.get("season_recent", {})
+    best_of5_recent = state.get("best_of5_recent", {})
+    slam_recent = state.get("slam_recent", {})
+    win_streak = state.get("win_streak", {})
+    loss_streak = state.get("loss_streak", {})
+    retirements = state.get("retirements", {})
+    recent_load = state.get("recent_load", {})
+    tournament_load = state.get("tournament_load", {})
     rank, pts = state["rank"], state["pts"]
     surface = norm_surface(surface)
     fallback_elo_ranks = _elo_rank_map(elo, last_dates, date)
@@ -210,14 +236,25 @@ def upcoming_features(
     def activity(player):
         return sum(1 for d in last_dates[player] if (date - d).days <= 60)
 
+    def load_since(player, days):
+        sets = games = 0
+        for d, s, g in recent_load.get(player, []):
+            if 0 <= (date - d).days <= days:
+                sets += s
+                games += g
+        return sets, games
+
     key = _pair(p1, p2)
     counts = state["h2h"][key]
     total = counts[0] + counts[1]
     sackmann = state["sackmann"]
-    p1_r_sets = p1_r_games = p2_r_sets = p2_r_games = 0
-    p1_t_sets = p1_t_games = p2_t_sets = p2_t_games = 0
-    r1 = _rank_feature_value(p1, NA, _finite_or_nan(rank.get(p1)), fallback_elo_ranks)
-    r2 = _rank_feature_value(p2, NA, _finite_or_nan(rank.get(p2)), fallback_elo_ranks)
+    event_key = (date.year, str(tournament_id or ""), str(tournament or ""))
+    p1_t_sets, p1_t_games = tournament_load.get(event_key, {}).get(p1, [0, 0])
+    p2_t_sets, p2_t_games = tournament_load.get(event_key, {}).get(p2, [0, 0])
+    p1_r_sets, p1_r_games = load_since(p1, 14)
+    p2_r_sets, p2_r_games = load_since(p2, 14)
+    r1 = _rank_feature_value(p1, _finite_or_nan(rank1), _finite_or_nan(rank.get(p1)), fallback_elo_ranks)
+    r2 = _rank_feature_value(p2, _finite_or_nan(rank2), _finite_or_nan(rank.get(p2)), fallback_elo_ranks)
     q1 = _finite_or_nan(pts.get(p1))
     q2 = _finite_or_nan(pts.get(p2))
     return {
@@ -227,6 +264,14 @@ def upcoming_features(
         "d_lpts": _log1p_diff(q1, q2),
         "d_form10": form(p1, 10) - form(p2, 10),
         "d_form25": form(p1, 25) - form(p2, 25),
+        "d_surface_form10": _win_rate(list(surface_recent.get((p1, surface), []))[-10:]) - _win_rate(list(surface_recent.get((p2, surface), []))[-10:]),
+        "d_surface_form25": _win_rate(list(surface_recent.get((p1, surface), []))[-25:]) - _win_rate(list(surface_recent.get((p2, surface), []))[-25:]),
+        "d_season_winrate": _win_rate(season_recent.get((p1, date.year), [])) - _win_rate(season_recent.get((p2, date.year), [])),
+        "d_season_matches": (len(season_recent.get((p1, date.year), [])) - len(season_recent.get((p2, date.year), []))) / 30.0,
+        "d_win_streak": (win_streak.get(p1, 0) - win_streak.get(p2, 0)) / 10.0,
+        "d_loss_streak": (loss_streak.get(p2, 0) - loss_streak.get(p1, 0)) / 10.0,
+        "d_best_of5_winrate": _win_rate(best_of5_recent.get(p1, [])) - _win_rate(best_of5_recent.get(p2, [])),
+        "d_slam_winrate": _win_rate(slam_recent.get(p1, [])) - _win_rate(slam_recent.get(p2, [])),
         "d_activity": (activity(p1) - activity(p2)) / 10.0,
         "h2h": _share_for_player(counts, key, p1),
         "h2h_count": math.log1p(total),
@@ -238,6 +283,8 @@ def upcoming_features(
         "d_tourn_games": (p1_t_games - p2_t_games) / 100.0,
         "d_recent_sets": (p1_r_sets - p2_r_sets) / 20.0,
         "d_recent_games": (p1_r_games - p2_r_games) / 200.0,
+        "d_retirement_365": (_count_since(retirements.get(p1, []), date, 365) - _count_since(retirements.get(p2, []), date, 365)) / 3.0,
+        "d_recent_retirement": (_count_since(retirements.get(p1, []), date, 45) - _count_since(retirements.get(p2, []), date, 45)),
         "d_rest_days": (_rest_days(p1, last_dates, date) - _rest_days(p2, last_dates, date)) / 21.0,
         "rank_both_known": 1.0 if _finite(r1) and _finite(r2) else 0.0,
         "pts_both_known": 1.0 if _finite(q1) and _finite(q2) else 0.0,
@@ -282,8 +329,16 @@ def build_features(allm: pd.DataFrame):
     """Parcourt les matchs en ordre chronologique et produit X, y, meta (+ état final)."""
     elo = TennisElo()
     all_players = set(allm["Winner"].astype(str).str.strip()) | set(allm["Loser"].astype(str).str.strip())
-    sackmann = RollingSackmannStats.from_cache(existing_players=all_players)
+    tour = str(allm.attrs.get("tour", "atp")).lower()
+    sackmann = RollingSackmannStats.from_cache(existing_players=all_players, tour=tour)
     recent: dict[str, deque] = defaultdict(lambda: deque(maxlen=25))
+    surface_recent: dict[tuple[str, str], deque] = defaultdict(lambda: deque(maxlen=25))
+    season_recent: dict[tuple[str, int], deque] = defaultdict(lambda: deque(maxlen=80))
+    best_of5_recent: dict[str, deque] = defaultdict(lambda: deque(maxlen=25))
+    slam_recent: dict[str, deque] = defaultdict(lambda: deque(maxlen=40))
+    win_streak: dict[str, int] = defaultdict(int)
+    loss_streak: dict[str, int] = defaultdict(int)
+    retirements: dict[str, deque] = defaultdict(lambda: deque(maxlen=8))
     last_dates: dict[str, deque] = defaultdict(lambda: deque(maxlen=40))
     h2h: dict[tuple, list] = defaultdict(lambda: [0, 0])
     h2h_surface: dict[tuple, list] = defaultdict(lambda: [0, 0])
@@ -390,6 +445,14 @@ def build_features(allm: pd.DataFrame):
             "d_lpts": _log1p_diff(q1, q2),
             "d_form10": form(p1, 10) - form(p2, 10),
             "d_form25": form(p1, 25) - form(p2, 25),
+            "d_surface_form10": _win_rate(list(surface_recent[(p1, surface)])[-10:]) - _win_rate(list(surface_recent[(p2, surface)])[-10:]),
+            "d_surface_form25": _win_rate(surface_recent[(p1, surface)]) - _win_rate(surface_recent[(p2, surface)]),
+            "d_season_winrate": _win_rate(season_recent[(p1, date.year)]) - _win_rate(season_recent[(p2, date.year)]),
+            "d_season_matches": (len(season_recent[(p1, date.year)]) - len(season_recent[(p2, date.year)])) / 30.0,
+            "d_win_streak": (win_streak[p1] - win_streak[p2]) / 10.0,
+            "d_loss_streak": (loss_streak[p2] - loss_streak[p1]) / 10.0,
+            "d_best_of5_winrate": _win_rate(best_of5_recent[p1]) - _win_rate(best_of5_recent[p2]),
+            "d_slam_winrate": _win_rate(slam_recent[p1]) - _win_rate(slam_recent[p2]),
             "d_activity": (activity(p1) - activity(p2)) / 10.0,
             "h2h": h2h_p1,
             "h2h_count": math.log1p(tot),
@@ -401,6 +464,8 @@ def build_features(allm: pd.DataFrame):
             "d_tourn_games": (p1_t_games - p2_t_games) / 100.0,
             "d_recent_sets": (p1_r_sets - p2_r_sets) / 20.0,
             "d_recent_games": (p1_r_games - p2_r_games) / 200.0,
+            "d_retirement_365": (_count_since(retirements[p1], date, 365) - _count_since(retirements[p2], date, 365)) / 3.0,
+            "d_recent_retirement": (_count_since(retirements[p1], date, 45) - _count_since(retirements[p2], date, 45)),
             "d_rest_days": (_rest_days(p1, last_dates, date) - _rest_days(p2, last_dates, date)) / 21.0,
             "rank_both_known": 1.0 if _finite(r1) and _finite(r2) else 0.0,
             "pts_both_known": 1.0 if _finite(q1) and _finite(q2) else 0.0,
@@ -439,6 +504,22 @@ def build_features(allm: pd.DataFrame):
                                 "winner": w, "loser": l, "score": _score_str(m)})
         recent[w].append(1)
         recent[l].append(0)
+        surface_recent[(w, surface)].append(1)
+        surface_recent[(l, surface)].append(0)
+        season_recent[(w, date.year)].append(1)
+        season_recent[(l, date.year)].append(0)
+        if float(m.get("Best of", 3) or 3) >= 5:
+            best_of5_recent[w].append(1)
+            best_of5_recent[l].append(0)
+        if str(m.get("Series")) == "Grand Slam":
+            slam_recent[w].append(1)
+            slam_recent[l].append(0)
+        win_streak[w] += 1
+        loss_streak[w] = 0
+        loss_streak[l] += 1
+        win_streak[l] = 0
+        if str(m.get("Comment") or "") == "Retired":
+            retirements[l].append(date)
         last_dates[w].append(date)
         last_dates[l].append(date)
         winner_side = 0 if w == k[0] else 1
@@ -468,7 +549,11 @@ def build_features(allm: pd.DataFrame):
 
     X = pd.DataFrame(rows)[FEATURES]
     y = np.array(ys)
-    state = {"elo": elo, "recent": recent, "rank": rank, "pts": pts, "last_dates": last_dates,
+    state = {"elo": elo, "recent": recent, "surface_recent": surface_recent,
+             "season_recent": season_recent, "best_of5_recent": best_of5_recent,
+             "slam_recent": slam_recent, "win_streak": win_streak, "loss_streak": loss_streak,
+             "retirements": retirements, "recent_load": recent_load, "tournament_load": tournament_load,
+             "rank": rank, "pts": pts, "last_dates": last_dates,
              "history": history, "year_end": year_end, "slam_finals": slam_finals,
              # Compteurs de confrontations directes : rejoués tels quels pour un match
              # à venir, sinon ses features h2h seraient neutres alors qu'on les connaît.

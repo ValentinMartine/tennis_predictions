@@ -224,7 +224,10 @@ def _player_match_stats(allm):
 
 def _enrich_with_sackmann_stats(base_stats: list[dict], allm) -> list[dict]:
     all_players = set(allm["Winner"].astype(str).str.strip()) | set(allm["Loser"].astype(str).str.strip())
-    sackmann_matches = load_match_stats(existing_players=all_players)
+    sackmann_matches = load_match_stats(
+        existing_players=all_players,
+        tour=str(allm.attrs.get("tour", "atp")).lower(),
+    )
     sackmann_stats = aggregate_player_stats(sackmann_matches)
     if not sackmann_stats:
         return base_stats
@@ -262,8 +265,15 @@ def build_upcoming(tour: str, allm, state, model, blend_w, calibrator=None, mark
             continue
         best_of = 5 if (tour == "atp" and _is_slam(season, match)) else 3
         series = _series_for_tournament(season, match)
+        match_date = pd.to_datetime(match["date"], errors="coerce")
+        if pd.isna(match_date):
+            match_date = state["last_date"]
         rows.append(upcoming_features(state, p1, p2, match.get("surface") or "Hard",
-                                      best_of, state["last_date"], series, match.get("round")))
+                                      best_of, match_date, series, match.get("round"),
+                                      tournament_id=match.get("tournament_id"),
+                                      tournament=match.get("tournament"),
+                                      rank1=match.get("rank1"),
+                                      rank2=match.get("rank2")))
         metas.append((match, p1, p2, series))
 
     if not rows:
@@ -626,12 +636,13 @@ def main(argv: list[str] | None = None) -> int:
     if current_year_source and current_year_source != "tennis-data.co.uk":
         source_label += f" + fallback {current_year_source}"
     if has_sackmann_stats:
-        source_label += " + Jeff Sackmann tennis_atp (serve/return statistics)"
+        source_label += f" + Jeff Sackmann tennis_{tour} (serve/return statistics)"
 
     payload = {
         "generated_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "method": "Modèle indépendant sans cotes : Elo global+surface + LightGBM sur features "
-                  "sans fuite (classement/points, forme, charge, repos, H2H, niveau, tour, surface), "
+                  "sans fuite (classement/points, forme globale/surface/saison, streaks, charge, repos, "
+                  "abandons récents, H2H, niveau, tour, surface, stats service/retour si cache Sackmann disponible), "
                   "poids ML/Elo réglé sur 2023, calibration prudente sur 2023 et test tenu à l'écart depuis 2024. "
                   "Le marché reste un benchmark affiché, pas une entrée de la probabilité primaire.",
         "model_policy": "independent_no_odds_primary",

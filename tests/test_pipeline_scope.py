@@ -70,6 +70,10 @@ def test_feature_list_includes_fatigue_and_context_features() -> None:
     assert "d_tourn_sets" in FEATURES
     assert "d_recent_games" in FEATURES
     assert "d_rest_days" in FEATURES
+    assert "d_surface_form10" in FEATURES
+    assert "d_season_winrate" in FEATURES
+    assert "d_win_streak" in FEATURES
+    assert "d_retirement_365" in FEATURES
     assert "rank_both_known" in FEATURES
     assert "level_grand_slam" in FEATURES
     assert "round_semifinal" in FEATURES
@@ -115,6 +119,19 @@ def test_features_fallback_to_internal_elo_rank_when_official_rank_is_absent() -
     assert X.iloc[-1]["rank_both_known"] == 1.0
     assert metas[-1]["wrank_feature"] == 1.0
     assert metas[-1]["lrank_feature"] == 2.0
+
+
+def test_recent_retirement_proxy_is_pre_match_only() -> None:
+    retired_loss = _match("ATP", "Beta", "Alpha")
+    retired_loss.update({"Date": pd.Timestamp("2026-01-01"), "Comment": "Retired"})
+    next_match = _match("ATP", "Beta", "Alpha")
+    next_match.update({"Date": pd.Timestamp("2026-01-20"), "Comment": "Completed"})
+
+    X, _, metas, _ = build_features(pd.DataFrame([retired_loss, next_match]))
+    idx = 1 if metas[1]["p1"] == "Alpha" else -1
+
+    assert X.iloc[0]["d_recent_retirement"] == 0.0
+    assert idx * X.iloc[1]["d_recent_retirement"] > 0
 
 
 def test_probability_calibrator_improves_miscalibrated_scale() -> None:

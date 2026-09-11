@@ -40,6 +40,11 @@ jobs:
       - name: Fetch upcoming schedule
         run: python scripts/fetch_upcoming.py
 
+      - name: Download serve and return stats
+        run: |
+          python scripts/download_sackmann_stats.py atp --from-year 2000
+          python scripts/download_sackmann_stats.py wta --from-year 2000
+
       - name: Train and export
         run: |
           python scripts/train_and_backtest.py atp
