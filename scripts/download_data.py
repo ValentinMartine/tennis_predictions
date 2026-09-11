@@ -343,6 +343,7 @@ def sackmann_score_repairs(
 
     repairs: dict[tuple[str, str, str], dict[str, int | None]] = {}
     pair_repairs: dict[tuple[str, str], list[dict[str, int | None]]] = {}
+    raw_pair_repairs: dict[tuple[str, str], list[dict[str, int | None]]] = {}
     for _, match in raw.iterrows():
         match_date = pd.to_datetime(str(match.get("tourney_date")), format="%Y%m%d", errors="coerce")
         if pd.isna(match_date):
@@ -357,10 +358,22 @@ def sackmann_score_repairs(
             tournament_key = _tournament_key(match.get("tourney_name"))
             if tournament_key:
                 repairs[(f"tournament:{tournament_key}", winner, loser)] = values
+                repairs[(
+                    f"rawtournament:{tournament_key}",
+                    _name_key(match.get("winner_name")),
+                    _name_key(match.get("loser_name")),
+                )] = values
             pair_repairs.setdefault((winner, loser), []).append(values)
+            raw_pair_repairs.setdefault((
+                _name_key(match.get("winner_name")),
+                _name_key(match.get("loser_name")),
+            ), []).append(values)
     for (winner, loser), candidates in pair_repairs.items():
         if len(candidates) == 1:
             repairs[("pair", winner, loser)] = candidates[0]
+    for (winner_key, loser_key), candidates in raw_pair_repairs.items():
+        if len(candidates) == 1:
+            repairs[("rawpair", winner_key, loser_key)] = candidates[0]
     return repairs
 
 
@@ -370,6 +383,8 @@ def maybe_repair_score_from_sackmann(
     tournament: object,
     winner: str,
     loser: str,
+    winner_full: object,
+    loser_full: object,
     repairs: dict[tuple[str, str, str], dict[str, int | None]],
 ) -> tuple[dict[str, int | None], bool, int]:
     """Replace a partial Valuebetennis score with a complete Sackmann score when possible."""
@@ -383,7 +398,9 @@ def maybe_repair_score_from_sackmann(
         tournament_key = _tournament_key(tournament)
         if tournament_key:
             keys.append((f"tournament:{tournament_key}", winner, loser))
+            keys.append((f"rawtournament:{tournament_key}", _name_key(winner_full), _name_key(loser_full)))
         keys.append(("pair", winner, loser))
+        keys.append(("rawpair", _name_key(winner_full), _name_key(loser_full)))
         for key in keys:
             repaired = repairs.get(key)
             if repaired:
@@ -520,8 +537,10 @@ def download_valuebetennis_fallback(year: int, destination: Path, tour: str = "a
     rows = []
     for _, match in raw.iterrows():
         winner_is_player1 = str(match["vainqueur_id"]) == str(match["joueur1_id"])
-        winner = short_name_from_full(match["joueur1"] if winner_is_player1 else match["joueur2"], surnames)
-        loser = short_name_from_full(match["joueur2"] if winner_is_player1 else match["joueur1"], surnames)
+        winner_full = match["joueur1"] if winner_is_player1 else match["joueur2"]
+        loser_full = match["joueur2"] if winner_is_player1 else match["joueur1"]
+        winner = short_name_from_full(winner_full, surnames)
+        loser = short_name_from_full(loser_full, surnames)
         round_label = valuebetennis_round(match["tour"])
         if round_label in QUALIFYING_ROUNDS:
             continue
@@ -532,6 +551,8 @@ def download_valuebetennis_fallback(year: int, destination: Path, tour: str = "a
             match["tournoi"],
             winner,
             loser,
+            winner_full,
+            loser_full,
             score_repairs,
         )
         # Un abandon au premier set reste un résultat : il suffit d'un set terminé pour

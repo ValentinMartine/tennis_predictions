@@ -236,6 +236,8 @@ def test_partial_valuebetennis_score_is_repaired_from_sackmann() -> None:
         "US Open - New York",
         "Zverev A.",
         "Zandschulp B.V.D.",
+        "Alexander Zverev",
+        "Botic Van De Zandschulp",
         {("date:2026-09-01", "Zverev A.", "Zandschulp B.V.D."): repaired},
     )
 
@@ -255,6 +257,8 @@ def test_partial_valuebetennis_score_can_be_repaired_by_tournament_key() -> None
         "United Cup - Australia",
         "Baez S.",
         "Fritz T.",
+        "Sebastian Baez",
+        "Taylor Harry Fritz",
         {("tournament:unitedcup", "Baez S.", "Fritz T."): repaired},
     )
 
@@ -262,3 +266,24 @@ def test_partial_valuebetennis_score_can_be_repaired_by_tournament_key() -> None
     assert complete_sets == 2
     assert fixed["W2"] == 7
     assert fixed["L2"] == 5
+
+
+def test_partial_valuebetennis_score_can_be_repaired_by_raw_names() -> None:
+    score = score_columns_from_valuebetennis("4-6 3-4", winner_is_player1=False)
+    repaired = score_columns("6-4 6-4")
+
+    fixed, partial, complete_sets = maybe_repair_score_from_sackmann(
+        score,
+        "2026-01-02",
+        "United Cup - Australia",
+        "Baez S.",
+        "Clar J.A.M.",
+        "Sebastian Baez",
+        "Jaume Antoni Munar Clar",
+        {("rawpair", "sebastianbaez", "jaumeantonimunarclar"): repaired},
+    )
+
+    assert partial is False
+    assert complete_sets == 2
+    assert fixed["W2"] == 6
+    assert fixed["L2"] == 4
