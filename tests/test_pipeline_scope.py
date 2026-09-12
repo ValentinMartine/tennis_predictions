@@ -94,6 +94,64 @@ def test_wta_results_patch_replaces_stale_rows_and_adds_missing_matches(tmp_path
     assert ("Pegula J.", "Navarro E.") in pairs
 
 
+def test_atp_recent_patch_replaces_stale_rows_and_adds_missing_matches(tmp_path, monkeypatch) -> None:
+    stale = _match("Grand Slam", "Khachanov K.", "Blockx A.")
+    stale.update({
+        "ATP": 16866,
+        "Tournament": "U.S. Open - New York",
+        "Date": pd.Timestamp("2026-09-10"),
+        "Round": "Quarterfinals",
+        "Best of": 5,
+        "Wsets": 2,
+        "Lsets": 0,
+        "W1": 6,
+        "L1": 2,
+        "W2": 7,
+        "L2": 5,
+        "W3": np.nan,
+        "L3": np.nan,
+    })
+    pd.DataFrame([stale]).to_parquet(tmp_path / "seasons_atp.parquet")
+
+    fixed = stale.copy()
+    fixed.update({
+        "Comment": "Retired",
+        "Wsets": 2,
+        "Lsets": 0,
+        "W3": 3,
+        "L3": 2,
+    })
+    missing = _match("Grand Slam", "Zverev A.", "Khachanov K.")
+    missing.update({
+        "ATP": 16866,
+        "Tournament": "U.S. Open - New York",
+        "Date": pd.Timestamp("2026-09-11"),
+        "Round": "Semifinals",
+        "Best of": 5,
+        "WRank": 2,
+        "LRank": 50,
+        "Wsets": 3,
+        "Lsets": 0,
+        "W1": 6,
+        "L1": 3,
+        "W2": 7,
+        "L2": 6,
+        "W3": 7,
+        "L3": 6,
+    })
+    pd.DataFrame([fixed, missing]).to_csv(tmp_path / "results_patch.csv", index=False)
+    monkeypatch.setattr("src.pipeline.DATA", tmp_path)
+
+    kept = load_matches("atp")
+    khachanov = kept[(kept["Winner"] == "Khachanov K.") & (kept["Loser"] == "Blockx A.")]
+
+    assert len(khachanov) == 1
+    assert khachanov.iloc[0]["Comment"] == "Retired"
+    assert khachanov.iloc[0]["W3"] == 3
+    assert ("Zverev A.", "Khachanov K.") in set(zip(kept["Winner"], kept["Loser"]))
+    assert kept["Date"].max().date().isoformat() == "2026-09-11"
+
+
 def test_wta_results_patch_is_loaded_after_cached_source_lag(tmp_path, monkeypatch) -> None:
     base = _match("Grand Slam", "Gauff C.", "Andreeva M.")
     base.update({
