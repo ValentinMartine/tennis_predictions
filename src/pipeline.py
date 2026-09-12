@@ -125,6 +125,16 @@ def _rank_feature_value(
     return _finite_or_nan(fallback_elo_ranks.get(player))
 
 
+def _patch_key(row) -> tuple:
+    return (
+        pd.Timestamp(row["Date"]).year,
+        str(row.get("Tournament") or "").strip().lower(),
+        str(row.get("Round") or "").strip().lower(),
+        str(row.get("Winner") or "").strip(),
+        str(row.get("Loser") or "").strip(),
+    )
+
+
 def load_matches(tour: str = "atp") -> pd.DataFrame:
     # Le corpus consolidé est versionné : local et CI partent du même fichier. Les .xlsx
     # ne servent que de fichiers de travail entre deux exécutions de download_data.py.
@@ -149,15 +159,24 @@ def load_matches(tour: str = "atp") -> pd.DataFrame:
     patch = DATA / ("results_patch.csv" if tour == "atp" else f"results_patch_{tour}.csv")
     if patch.exists():
         extra = pd.read_csv(patch, parse_dates=["Date"])
-        last_covered = allm["Date"].max().date()
-        extra = extra[extra["Date"].dt.date > last_covered]
-        key = set(zip(allm["Date"].dt.date.astype(str), allm["Winner"], allm["Loser"]))
-        rows = [r for _, r in extra.iterrows()
-                if (str(r["Date"].date()), r["Winner"], r["Loser"]) not in key]
-        if rows:
-            allm = pd.concat([allm, pd.DataFrame(rows)], ignore_index=True)
-            allm = allm.sort_values("Date").reset_index(drop=True)
-            print(f"  +{len(rows)} match(s) du patch live")
+        if not extra.empty:
+            if tour == "atp":
+                last_covered = allm["Date"].max().date()
+                extra = extra[extra["Date"].dt.date > last_covered]
+                key = set(zip(allm["Date"].dt.date.astype(str), allm["Winner"], allm["Loser"]))
+                rows = [r for _, r in extra.iterrows()
+                        if (str(r["Date"].date()), r["Winner"], r["Loser"]) not in key]
+                if rows:
+                    allm = pd.concat([allm, pd.DataFrame(rows)], ignore_index=True)
+                    allm = allm.sort_values("Date").reset_index(drop=True)
+                    print(f"  +{len(rows)} match(s) du patch live")
+            else:
+                extra_keys = {_patch_key(r) for _, r in extra.iterrows()}
+                keep = [_patch_key(r) not in extra_keys for _, r in allm.iterrows()]
+                removed = len(allm) - sum(keep)
+                allm = pd.concat([allm.loc[keep], extra], ignore_index=True)
+                allm = allm.sort_values("Date").reset_index(drop=True)
+                print(f"  patch résultats : {len(extra)} ligne(s), {removed} remplacée(s)")
     return allm
 
 

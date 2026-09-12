@@ -33,6 +33,67 @@ def test_load_matches_drops_challenger_and_itf(tmp_path, monkeypatch) -> None:
     assert "Epsilon" not in set(kept["Winner"])
 
 
+def test_wta_results_patch_replaces_stale_rows_and_adds_missing_matches(tmp_path, monkeypatch) -> None:
+    stale = _match("Grand Slam", "Sabalenka A.", "Noskova L.")
+    stale.update({
+        "ATP": 16865,
+        "Tournament": "U.S. Open - New York",
+        "Date": pd.Timestamp("2026-09-08"),
+        "Round": "Quarterfinals",
+        "W1": 6,
+        "L1": 3,
+        "W2": 6,
+        "L2": 4,
+        "W3": np.nan,
+        "L3": np.nan,
+    })
+    current = _match("Grand Slam", "Gauff C.", "Andreeva M.")
+    current.update({
+        "ATP": 16865,
+        "Tournament": "U.S. Open - New York",
+        "Date": pd.Timestamp("2026-09-09"),
+        "Round": "Quarterfinals",
+    })
+    pd.DataFrame([stale, current]).to_parquet(tmp_path / "seasons_wta.parquet")
+
+    fixed = _match("Grand Slam", "Sabalenka A.", "Noskova L.")
+    fixed.update({
+        "ATP": 16865,
+        "Tournament": "U.S. Open - New York",
+        "Date": pd.Timestamp("2026-09-08"),
+        "Round": "Quarterfinals",
+        "W1": 7,
+        "L1": 6,
+        "W2": 3,
+        "L2": 6,
+        "W3": 7,
+        "L3": 6,
+    })
+    missing = _match("Grand Slam", "Pegula J.", "Navarro E.")
+    missing.update({
+        "ATP": 16865,
+        "Tournament": "U.S. Open - New York",
+        "Date": pd.Timestamp("2026-09-08"),
+        "Round": "Quarterfinals",
+        "W1": 3,
+        "L1": 6,
+        "W2": 6,
+        "L2": 4,
+        "W3": 6,
+        "L3": 3,
+    })
+    pd.DataFrame([fixed, missing]).to_csv(tmp_path / "results_patch_wta.csv", index=False)
+    monkeypatch.setattr("src.pipeline.DATA", tmp_path)
+
+    kept = load_matches("wta")
+    pairs = set(zip(kept["Winner"], kept["Loser"]))
+    sabalenka = kept[(kept["Winner"] == "Sabalenka A.") & (kept["Loser"] == "Noskova L.")]
+
+    assert len(sabalenka) == 1
+    assert sabalenka.iloc[0]["W1"] == 7
+    assert ("Pegula J.", "Navarro E.") in pairs
+
+
 def test_wta_results_patch_is_loaded_after_cached_source_lag(tmp_path, monkeypatch) -> None:
     base = _match("Grand Slam", "Gauff C.", "Andreeva M.")
     base.update({
