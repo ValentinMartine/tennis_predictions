@@ -18,7 +18,8 @@ def _predictions(series="ATP", last_match="2026-09-09"):
         "elo_rankings": [{"player": f"J{i}", "elo": 1800} for i in range(30)],
         "player_stats": [{"player": f"J{i}", "matches": 40} for i in range(300)],
         "recent_matches": [{
-            "series": series, "winner": "J0", "loser": "J1",
+            "date": "2026-09-09", "tournament": "Test Open", "series": series,
+            "round": "Quarterfinals", "round_order": 500, "winner": "J0", "loser": "J1",
             "predicted_player": "J0", "model_correct": True, "predicted_prob": 0.7,
         }] * 100,
         "elo_peaks": [], "year_end": [], "slam_winners": [],

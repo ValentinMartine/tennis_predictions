@@ -152,6 +152,41 @@ def test_atp_recent_patch_replaces_stale_rows_and_adds_missing_matches(tmp_path,
     assert kept["Date"].max().date().isoformat() == "2026-09-11"
 
 
+def test_results_patch_replaces_rows_even_when_the_source_winner_is_wrong(tmp_path, monkeypatch) -> None:
+    stale = _match("Grand Slam", "Berrettini M.", "Arnaldi M.")
+    stale.update({
+        "ATP": 42,
+        "Tournament": "French Open - Paris",
+        "Date": pd.Timestamp("2026-06-03"),
+        "Round": "Quarterfinals",
+        "Best of": 5,
+        "W1": 5,
+        "L1": 7,
+    })
+    pd.DataFrame([stale]).to_parquet(tmp_path / "seasons_atp.parquet")
+
+    fixed = _match("Grand Slam", "Arnaldi M.", "Berrettini M.")
+    fixed.update({
+        "ATP": 42,
+        "Tournament": "French Open - Paris",
+        "Date": pd.Timestamp("2026-06-03"),
+        "Round": "Quarterfinals",
+        "Best of": 5,
+        "Comment": "Retired",
+        "W1": 7,
+        "L1": 5,
+        "W2": 5,
+        "L2": 2,
+    })
+    pd.DataFrame([fixed]).to_csv(tmp_path / "results_patch.csv", index=False)
+    monkeypatch.setattr("src.pipeline.DATA", tmp_path)
+
+    kept = load_matches("atp")
+
+    assert list(zip(kept["Winner"], kept["Loser"])) == [("Arnaldi M.", "Berrettini M.")]
+    assert kept.iloc[0]["Comment"] == "Retired"
+
+
 def test_wta_results_patch_is_loaded_after_cached_source_lag(tmp_path, monkeypatch) -> None:
     base = _match("Grand Slam", "Gauff C.", "Andreeva M.")
     base.update({

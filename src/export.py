@@ -47,6 +47,30 @@ TEST_START = np.datetime64("2024-01-01")
 N_TOURNAMENTS = 4
 MARKET_MODEL_GAP_ALERT = 0.15
 
+ROUND_ORDER = {
+    "Qualifying 1": 10,
+    "Qualifying 2": 20,
+    "Qualifying 3": 30,
+    "1st Round": 100,
+    "Round of 128": 100,
+    "2nd Round": 200,
+    "Round of 64": 200,
+    "3rd Round": 300,
+    "Round of 32": 300,
+    "4th Round": 400,
+    "Round of 16": 400,
+    "Quarterfinals": 500,
+    "Semifinals": 600,
+    "The Final": 700,
+    "Final": 700,
+    "Round Robin": 50,
+}
+
+
+def round_order(round_name) -> int:
+    """Ordre sportif du tableau, indépendant de l'ordre alphabétique ou de la date source."""
+    return ROUND_ORDER.get(str(round_name or "").strip(), 0)
+
 
 def _opt_int(value) -> int | None:
     """Entier exportable, ou None quand le classement est inconnu (NaN, 0, vide)."""
@@ -299,6 +323,7 @@ def build_upcoming(tour: str, allm, state, model, blend_w, calibrator=None, mark
             "date": match["date"], "time": match.get("time"),
             "tournament": match["tournament"], "series": series, "surface": match.get("surface"),
             "round": match.get("round"),
+            "round_order": round_order(match.get("round")),
             "player1": p1, "player2": p2,
             "rank1": match.get("rank1"), "rank2": match.get("rank2"),
             "odds1": match.get("odds1"), "odds2": match.get("odds2"),
@@ -311,7 +336,7 @@ def build_upcoming(tour: str, allm, state, model, blend_w, calibrator=None, mark
                 and prediction["market_model_gap"] >= MARKET_MODEL_GAP_ALERT else None
             ),
         })
-    upcoming.sort(key=lambda m: (m["date"], m["time"] or ""))
+    upcoming.sort(key=lambda m: (m["date"], m["time"] or "", m.get("round_order", 0)))
     return upcoming
 
 
@@ -527,6 +552,7 @@ def main(argv: list[str] | None = None) -> int:
             "date": str(np.datetime_as_string(dates[i], unit="D")),
             "tournament": m["tournament"], "series": m["series"],
             "surface": m["surface"], "round": m["round"],
+            "round_order": round_order(m["round"]),
             "winner": m["winner"], "loser": m["loser"],
             "wrank": _opt_int(m["wrank"]),
             "lrank": _opt_int(m["lrank"]),
@@ -547,6 +573,21 @@ def main(argv: list[str] | None = None) -> int:
             # plutôt que d'afficher un score qui contredit le vainqueur.
             "score_partial": _text_or_empty(m.get("score_status")) == "partial",
         })
+
+    tournament_last_date = {}
+    for match in recent_matches:
+        tournament_last_date[match["tournament"]] = max(
+            tournament_last_date.get(match["tournament"], match["date"]),
+            match["date"],
+        )
+    recent_matches.sort(
+        key=lambda match: (
+            tournament_last_date.get(match["tournament"], match["date"]),
+            match.get("round_order", 0),
+            match["date"],
+        ),
+        reverse=True,
+    )
 
     # ===== Historique Elo 2000-2026 =====
     history = state["history"]

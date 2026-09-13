@@ -135,6 +135,19 @@ def _patch_key(row) -> tuple:
     )
 
 
+def _patch_pair_key(row) -> tuple:
+    players = tuple(sorted((
+        str(row.get("Winner") or "").strip(),
+        str(row.get("Loser") or "").strip(),
+    )))
+    return (
+        pd.Timestamp(row["Date"]).year,
+        str(row.get("Tournament") or "").strip().lower(),
+        str(row.get("Round") or "").strip().lower(),
+        players,
+    )
+
+
 def load_matches(tour: str = "atp") -> pd.DataFrame:
     # Le corpus consolidé est versionné : local et CI partent du même fichier. Les .xlsx
     # ne servent que de fichiers de travail entre deux exécutions de download_data.py.
@@ -162,21 +175,29 @@ def load_matches(tour: str = "atp") -> pd.DataFrame:
         if not extra.empty:
             if tour == "atp":
                 last_covered = allm["Date"].max()
-                recent_cutoff = (last_covered - pd.Timedelta(days=14)).date()
                 extra = extra[
                     (extra["Date"].dt.year == last_covered.year)
-                    & (extra["Date"].dt.date >= recent_cutoff)
                 ]
                 if not extra.empty:
                     extra_keys = {_patch_key(r) for _, r in extra.iterrows()}
-                    keep = [_patch_key(r) not in extra_keys for _, r in allm.iterrows()]
+                    extra_pair_keys = {_patch_pair_key(r) for _, r in extra.iterrows()}
+                    keep = [
+                        _patch_key(r) not in extra_keys
+                        and _patch_pair_key(r) not in extra_pair_keys
+                        for _, r in allm.iterrows()
+                    ]
                     removed = len(allm) - sum(keep)
                     allm = pd.concat([allm.loc[keep], extra], ignore_index=True)
                     allm = allm.sort_values("Date").reset_index(drop=True)
                     print(f"  patch résultats ATP : {len(extra)} ligne(s), {removed} remplacée(s)")
             else:
                 extra_keys = {_patch_key(r) for _, r in extra.iterrows()}
-                keep = [_patch_key(r) not in extra_keys for _, r in allm.iterrows()]
+                extra_pair_keys = {_patch_pair_key(r) for _, r in extra.iterrows()}
+                keep = [
+                    _patch_key(r) not in extra_keys
+                    and _patch_pair_key(r) not in extra_pair_keys
+                    for _, r in allm.iterrows()
+                ]
                 removed = len(allm) - sum(keep)
                 allm = pd.concat([allm.loc[keep], extra], ignore_index=True)
                 allm = allm.sort_values("Date").reset_index(drop=True)

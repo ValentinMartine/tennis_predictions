@@ -35,6 +35,25 @@ ALLOWED_SERIES = {
     "WTA 1000", "WTA 500", "WTA 250",
 }
 
+ROUND_ORDER = {
+    "Qualifying 1": 10, "Qualifying 2": 20, "Qualifying 3": 30,
+    "1st Round": 100, "Round of 128": 100,
+    "2nd Round": 200, "Round of 64": 200,
+    "3rd Round": 300, "Round of 32": 300,
+    "4th Round": 400, "Round of 16": 400,
+    "Quarterfinals": 500,
+    "Semifinals": 600,
+    "The Final": 700, "Final": 700,
+    "Round Robin": 50,
+}
+
+
+def _round_order(match: dict) -> int:
+    value = match.get("round_order")
+    if value is not None:
+        return int(value)
+    return ROUND_ORDER.get(str(match.get("round") or "").strip(), 0)
+
 
 def validate_predictions(data: dict) -> None:
     required = {
@@ -89,6 +108,22 @@ def validate_predictions(data: dict) -> None:
                 f"Inconsistent model_correct flag: {match}")
         prob = match.get("predicted_prob")
         _assert(prob is None or 0.5 <= prob <= 1.0, f"Invalid predicted probability: {match}")
+        _assert(_round_order(match) > 0, f"Missing round_order for match: {match}")
+
+    by_tournament: dict[str, list[dict]] = {}
+    for match in data["recent_matches"]:
+        by_tournament.setdefault(match["tournament"], []).append(match)
+    for tournament, matches in by_tournament.items():
+        orders = [_round_order(match) for match in matches]
+        _assert(orders == sorted(orders, reverse=True), f"Rounds are not sorted for {tournament}")
+        is_grand_slam = any(match.get("series") == "Grand Slam" for match in matches)
+        has_final = any(match.get("round") in {"The Final", "Final"} for match in matches)
+        if is_grand_slam and has_final:
+            qf = sum(match.get("round") == "Quarterfinals" for match in matches)
+            sf = sum(match.get("round") == "Semifinals" for match in matches)
+            _assert(qf >= 4, f"Missing quarterfinals before final for {tournament}")
+            required_semifinals = 2 if "U.S. Open" in tournament else 1
+            _assert(sf >= required_semifinals, f"Missing semifinals before final for {tournament}")
 
 
 def validate_history(data: dict) -> None:
@@ -120,11 +155,14 @@ def validate_alignment(data: dict, history: dict) -> None:
 
 def validate_upcoming(data: dict) -> None:
     """Un match à venir n'a pas de résultat : seule sa probabilité doit être publiée."""
+    today = date.today().isoformat()
     for match in data.get("upcoming") or []:
         pair = {match["player1"], match["player2"]}
         _assert(match.get("predicted_player") in pair, f"Prediction outside match pair: {match}")
         probability = match.get("predicted_prob")
         _assert(probability is None or 0.5 <= probability <= 1.0, f"Invalid upcoming probability: {match}")
+        _assert((match.get("date") or "") >= today, f"Past match still listed as upcoming: {match}")
+        _assert(_round_order(match) > 0, f"Missing round_order for upcoming match: {match}")
         _assert("winner" not in match and "model_correct" not in match,
                 f"Upcoming match must not carry a result: {match}")
 
