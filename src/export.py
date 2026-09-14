@@ -541,13 +541,13 @@ def main(argv: list[str] | None = None) -> int:
     test_betting["validation_roi_flat"] = validation_betting["roi_flat"]
     metrics["betting"] = test_betting
 
-    # classement Elo des joueurs actifs (>= 1 match sur 6 mois, >= 30 matchs au total)
+    # classement Elo des joueurs actifs (>= 1 match sur 18 mois pour couvrir le top 300)
     elo, recent = state["elo"], state["recent"]
     last_dates, rank, pts = state["last_dates"], state["rank"], state["pts"]
     now = allm["Date"].max()
     players = []
     for p, r in elo.rating.items():
-        if elo.count[p] < 30 or not last_dates[p] or (now - last_dates[p][-1]).days > 180:
+        if elo.count[p] < 1 or not last_dates[p] or (now - last_dates[p][-1]).days > 540:
             continue
         d10 = list(recent[p])[-10:]
         streak = 0
@@ -569,8 +569,14 @@ def main(argv: list[str] | None = None) -> int:
             "streak": streak,
             "matches": elo.count[p],
         })
+    seen_canonical: dict[str, dict] = {}
+    for pl in players:
+        key = pl["player"].strip().lower()
+        if key not in seen_canonical or pl["matches"] > seen_canonical[key]["matches"]:
+            seen_canonical[key] = pl
+    players = list(seen_canonical.values())
     players.sort(key=lambda x: -x["elo"])
-    players = players[:60]
+    players = players[:300]
 
     # TOUS les matchs de la saison en cours (du plus récent au plus ancien)
     season_start = np.datetime64(f"{allm['Date'].max().year}-01-01")
@@ -644,7 +650,7 @@ def main(argv: list[str] | None = None) -> int:
     # trajectoires mensuelles (fichier dédié) : pics all-time + top 60 actuel + podiums
     # de fin d'année -> l'utilisateur choisit librement les joueurs affichés.
     timeline_players = [p["player"] for p in peaks]
-    for p in players:
+    for p in players[:60]:
         if p["player"] not in timeline_players:
             timeline_players.append(p["player"])
     for tops in year_end.values():

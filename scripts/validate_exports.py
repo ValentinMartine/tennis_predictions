@@ -83,7 +83,8 @@ def validate_predictions(data: dict) -> None:
     players = {p["player"] for p in data["elo_rankings"]}
     _assert(len(players) == len(data["elo_rankings"]), "Duplicate players in Elo ranking")
     stat_players = {p["player"] for p in data["player_stats"]}
-    _assert(players.issubset(stat_players), "Active Elo players missing from player_stats")
+    qualified_players = {p["player"] for p in data["elo_rankings"] if p.get("matches", 0) >= 30}
+    _assert(qualified_players.issubset(stat_players), "Active Elo players with >= 30 matches missing from player_stats")
     for player in data["player_stats"]:
         _assert(player["matches"] >= 30, f"Too few matches in player_stats for {player['player']}")
         for key in ("win_rate", "set_win_rate", "game_win_rate"):
@@ -152,8 +153,8 @@ def validate_alignment(data: dict, history: dict) -> None:
     _assert(last_month in history["months"],
             f"History stops at {history['months'][-1]} while last match is {last_month}")
     ranked = {p["player"] for p in history["ranking_players"]}
-    active = {p["player"] for p in data["elo_rankings"]}
-    _assert(active.issubset(ranked), "Active Elo players missing from the ranking history")
+    qualified_active = {p["player"] for p in data["elo_rankings"] if p.get("matches", 0) >= 30}
+    _assert(qualified_active.issubset(ranked), "Active Elo players with >= 30 matches missing from the ranking history")
 
 
 def validate_upcoming(data: dict) -> None:
