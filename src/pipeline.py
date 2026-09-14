@@ -314,6 +314,7 @@ def load_matches(tour: str = "atp") -> pd.DataFrame:
                 allm = pd.concat([allm.loc[keep], extra], ignore_index=True)
                 allm = allm.sort_values("Date").reset_index(drop=True)
                 print(f"  patch résultats : {len(extra)} ligne(s), {removed} remplacée(s)")
+    allm.attrs["tour"] = tour
     return allm
 
 
@@ -481,13 +482,13 @@ def _score_workload(m) -> tuple[int, int]:
     return sets, games
 
 
-def build_features(allm: pd.DataFrame):
+def build_features(allm: pd.DataFrame, tour: str | None = None):
     """Parcourt les matchs en ordre chronologique et produit X, y, meta (+ état final)."""
     elo = TennisElo()
     all_players = set(allm["Winner"].astype(str).str.strip()) | set(allm["Loser"].astype(str).str.strip())
-    tour = str(allm.attrs.get("tour", "atp")).lower()
-    rankings_lookup = get_rankings_lookup(tour)
-    sackmann = RollingSackmannStats.from_cache(existing_players=all_players, tour=tour)
+    resolved_tour = tour.lower() if tour else str(allm.attrs.get("tour", "atp")).lower()
+    rankings_lookup = get_rankings_lookup(resolved_tour)
+    sackmann = RollingSackmannStats.from_cache(existing_players=all_players, tour=resolved_tour)
     recent: dict[str, deque] = defaultdict(lambda: deque(maxlen=25))
     surface_recent: dict[tuple[str, str], deque] = defaultdict(lambda: deque(maxlen=25))
     season_recent: dict[tuple[str, int], deque] = defaultdict(lambda: deque(maxlen=80))

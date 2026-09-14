@@ -1,13 +1,13 @@
 {
-  "checked_at": "2026-09-14T13:42:27+00:00",
+  "checked_at": "2026-09-14T21:59:53+00:00",
   "tour": "wta",
   "primary_source": "tennis-data.co.uk",
   "fresh_csv_fallback": "Valuebetennis",
   "fresh_csv_fallback_url": "https://www.valuebetennis.com/donnees.htm",
   "current_year_max_staleness_days": 3,
   "fallback_sources": [
-    "https://raw.githubusercontent.com/JeffSackmann/tennis_wta/master/wta_matches_{y}.csv",
     "https://raw.githubusercontent.com/Aneeshers/tennis-sackmann-archive/main/wta/wta_matches_{y}.csv",
+    "https://raw.githubusercontent.com/JeffSackmann/tennis_wta/master/wta_matches_{y}.csv",
     "https://raw.githubusercontent.com/azhou5849/tennis-wta-sackmann-data/master/wta_matches_{y}.csv"
   ],
   "records": [
@@ -199,7 +199,7 @@
       "ok": true,
       "url": "https://www.valuebetennis.com/datasets/valuebetennis-matchs-2026.csv",
       "latest_match_date": "2026-09-11",
-      "rows": 1871,
+      "rows": 1782,
       "primary_error": "HTTP Error 503: Service Temporarily Unavailable",
       "error": null
     }

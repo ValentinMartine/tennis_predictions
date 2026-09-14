@@ -363,7 +363,7 @@ def main(argv: list[str] | None = None) -> int:
     tour = (argv or sys.argv[1:] or ["atp"])[0].lower()
     OUT, OUT_HIST, SOURCE_STATUS, MODEL = out_paths(tour)
     allm = load_matches(tour)
-    X, y, metas, state = build_features(allm)
+    X, y, metas, state = build_features(allm, tour=tour)
     bundle = joblib.load(MODEL)
     model, w = bundle["model"], bundle["blend_w"]
     model_features = bundle.get("features", FEATURES)
