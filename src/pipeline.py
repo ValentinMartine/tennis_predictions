@@ -21,6 +21,7 @@ import numpy as np
 import pandas as pd
 
 from .elo import TennisElo, norm_surface
+from .rankings import get_rankings_lookup
 from .sackmann_stats import STAT_FEATURES, RollingSackmannStats
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -50,6 +51,44 @@ def _log_diff(a: float, b: float) -> float:
 def _log1p_diff(a: float, b: float) -> float:
     return math.log1p(a) - math.log1p(b) if _finite(a) and _finite(b) else 0.0
 
+
+def _resolve_market_odds(m) -> tuple[float | None, float | None]:
+    """Extrait ou reconstruit la cote de marché moyenne / consensus du match."""
+    aw = m.get("AvgW")
+    al = m.get("AvgL")
+    try:
+        aw_f, al_f = float(aw), float(al)
+        if math.isfinite(aw_f) and math.isfinite(al_f) and aw_f > 1.0 and al_f > 1.0:
+            return aw_f, al_f
+    except (TypeError, ValueError):
+        pass
+
+    bookmaker_pairs = [
+        ("PSW", "PSL"),      # Pinnacle
+        ("B365W", "B365L"),  # Bet365
+        ("CBW", "CBL"),      # Centrebet
+        ("GBW", "GBL"),      # Gamebookers
+        ("IWW", "IWL"),      # Interwetten
+        ("SBW", "SBL"),      # Sportingbet
+        ("UBW", "UBL"),      # Unibet
+        ("LBW", "LBL"),      # Ladbrokes
+        ("MaxW", "MaxL"),
+    ]
+    w_odds = []
+    l_odds = []
+    for w_col, l_col in bookmaker_pairs:
+        w_val = m.get(w_col)
+        l_val = m.get(l_col)
+        try:
+            w_f, l_f = float(w_val), float(l_val)
+            if math.isfinite(w_f) and math.isfinite(l_f) and w_f > 1.0 and l_f > 1.0:
+                w_odds.append(w_f)
+                l_odds.append(l_f)
+        except (TypeError, ValueError):
+            continue
+    if w_odds and l_odds:
+        return round(float(np.mean(w_odds)), 3), round(float(np.mean(l_odds)), 3)
+    return None, None
 
 FEATURES = [
     "p_elo", "d_selo", "d_lrank", "d_lpts", "d_form10", "d_form25",
@@ -140,6 +179,27 @@ def _normalise_patch_tournament(value) -> str:
     return aliases.get(name, name)
 
 
+def _normalise_patch_round(value) -> str:
+    r = str(value or "").strip().lower()
+    mapping = {
+        "round of 128": "1st round",
+        "1st round": "1st round",
+        "round of 64": "2nd round",
+        "2nd round": "2nd round",
+        "round of 32": "3rd round",
+        "3rd round": "3rd round",
+        "round of 16": "4th round",
+        "4th round": "4th round",
+        "the final": "the final",
+        "final": "the final",
+        "semifinals": "semifinals",
+        "semifinal": "semifinals",
+        "quarterfinals": "quarterfinals",
+        "quarterfinal": "quarterfinals",
+    }
+    return mapping.get(r, r)
+
+
 def _normalise_patch_player(value) -> str:
     name = str(value or "").strip()
     key = name.lower()
@@ -150,6 +210,13 @@ def _normalise_patch_player(value) -> str:
         "fritz t.": "fritz t.",
         "zandschulp b.v.d.": "van de zandschulp b.",
         "van de zandschulp b.": "van de zandschulp b.",
+        "struff j.l.": "struff j.",
+        "struff j.": "struff j.",
+        "damm jr m.": "damm m.",
+        "damm m.": "damm m.",
+        "merida d.": "aguilar d.m.",
+        "aguilar d.m.": "aguilar d.m.",
+        "de minaur a.": "de minaur a.",
     }
     return aliases.get(key, key)
 
@@ -158,7 +225,7 @@ def _patch_key(row) -> tuple:
     return (
         pd.Timestamp(row["Date"]).year,
         _normalise_patch_tournament(row.get("Tournament")),
-        str(row.get("Round") or "").strip().lower(),
+        _normalise_patch_round(row.get("Round")),
         _normalise_patch_player(row.get("Winner")),
         _normalise_patch_player(row.get("Loser")),
     )
@@ -172,7 +239,19 @@ def _patch_pair_key(row) -> tuple:
     return (
         pd.Timestamp(row["Date"]).year,
         _normalise_patch_tournament(row.get("Tournament")),
-        str(row.get("Round") or "").strip().lower(),
+        _normalise_patch_round(row.get("Round")),
+        players,
+    )
+
+
+def _patch_tournament_pair_key(row) -> tuple:
+    players = tuple(sorted((
+        _normalise_patch_player(row.get("Winner")),
+        _normalise_patch_player(row.get("Loser")),
+    )))
+    return (
+        pd.Timestamp(row["Date"]).year,
+        _normalise_patch_tournament(row.get("Tournament")),
         players,
     )
 
@@ -194,6 +273,8 @@ def load_matches(tour: str = "atp") -> pd.DataFrame:
     # importé par un ancien fallback. Le périmètre du projet reste le main tour ATP.
     if "Series" in allm.columns:
         allm = allm[~allm["Series"].astype(str).isin(OUT_OF_SCOPE_SERIES)]
+    if "Tournament" in allm.columns:
+        allm = allm[~allm["Tournament"].astype(str).str.contains("juniors", case=False, na=False)]
     allm = allm.dropna(subset=["Winner", "Loser"])
     allm = allm.sort_values(["Date", "ATP", "Round"]).reset_index(drop=True)
     allm.attrs["tour"] = tour
@@ -210,9 +291,11 @@ def load_matches(tour: str = "atp") -> pd.DataFrame:
                 if not extra.empty:
                     extra_keys = {_patch_key(r) for _, r in extra.iterrows()}
                     extra_pair_keys = {_patch_pair_key(r) for _, r in extra.iterrows()}
+                    extra_tourn_pair_keys = {_patch_tournament_pair_key(r) for _, r in extra.iterrows()}
                     keep = [
                         _patch_key(r) not in extra_keys
                         and _patch_pair_key(r) not in extra_pair_keys
+                        and _patch_tournament_pair_key(r) not in extra_tourn_pair_keys
                         for _, r in allm.iterrows()
                     ]
                     removed = len(allm) - sum(keep)
@@ -403,6 +486,7 @@ def build_features(allm: pd.DataFrame):
     elo = TennisElo()
     all_players = set(allm["Winner"].astype(str).str.strip()) | set(allm["Loser"].astype(str).str.strip())
     tour = str(allm.attrs.get("tour", "atp")).lower()
+    rankings_lookup = get_rankings_lookup(tour)
     sackmann = RollingSackmannStats.from_cache(existing_players=all_players, tour=tour)
     recent: dict[str, deque] = defaultdict(lambda: deque(maxlen=25))
     surface_recent: dict[tuple[str, str], deque] = defaultdict(lambda: deque(maxlen=25))
@@ -464,6 +548,21 @@ def build_features(allm: pd.DataFrame):
         lr_raw = _num(m.get("LRank"), NA)
         wp_raw = _num(m.get("WPts"), NA)
         lp_raw = _num(m.get("LPts"), NA)
+
+        # Si le classement officiel est manquant, consulter la table hebdomadaire Sackmann
+        if not _finite(wr_raw):
+            r_val, p_val = rankings_lookup.get_rank_points(w, date)
+            if r_val is not None:
+                wr_raw = float(r_val)
+            if not _finite(wp_raw) and p_val is not None:
+                wp_raw = float(p_val)
+        if not _finite(lr_raw):
+            r_val, p_val = rankings_lookup.get_rank_points(l, date)
+            if r_val is not None:
+                lr_raw = float(r_val)
+            if not _finite(lp_raw) and p_val is not None:
+                lp_raw = float(p_val)
+
         needs_elo_rank_fallback = (
             not _finite(wr_raw)
             and not _finite(_finite_or_nan(rank.get(w)))
@@ -551,13 +650,14 @@ def build_features(allm: pd.DataFrame):
         }
         rows.append(feats)
         ys.append(1 if p1_win else 0)
+        m_avgw, m_avgl = _resolve_market_odds(m)
         metas.append({
             "date": date, "tournament": m.get("Tournament"), "series": m.get("Series"),
             "surface": surface, "round": m.get("Round"), "best_of": m.get("Best of"),
             "winner": w, "loser": l, "wrank": wr_raw, "lrank": lr_raw,
             "wrank_feature": wr, "lrank_feature": lr,
             "p1": p1, "p2": p2,
-            "avgw": m.get("AvgW"), "avgl": m.get("AvgL"),
+            "avgw": m_avgw, "avgl": m_avgl,
             "score": _score_str(m),
             "comment": m.get("Comment"),
             "score_status": m.get("ScoreStatus"),
@@ -619,6 +719,14 @@ def build_features(allm: pd.DataFrame):
 
     if cur_year is not None:
         year_end[cur_year] = _snapshot_top(date)  # année en cours = état actuel
+
+    # Injection du classement contemporain officiel pour les joueurs actifs
+    for p in set(list(rank.keys()) + list(elo.rating.keys())):
+        lat_r, lat_p = rankings_lookup.get_latest_rank_points(p)
+        if lat_r is not None:
+            rank[p] = lat_r
+        if lat_p is not None:
+            pts[p] = lat_p
 
     X = pd.DataFrame(rows)[FEATURES]
     y = np.array(ys)

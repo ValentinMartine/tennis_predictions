@@ -20,6 +20,9 @@ from pathlib import Path
 import pandas as pd
 
 ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+from src.rankings import get_rankings_lookup
 DATA = ROOT / "data"
 FIRST_SEASON = 2000
 VALUEBETENNIS_URL = "https://www.valuebetennis.com/datasets/valuebetennis-matchs-{y}.csv"
@@ -32,8 +35,8 @@ TOURS = {
         "primary": "http://www.tennis-data.co.uk/{y}/{y}.xlsx",
         "genre": "atp",
         "mirrors": (
-            "https://raw.githubusercontent.com/JeffSackmann/tennis_atp/master/atp_matches_{y}.csv",
             "https://raw.githubusercontent.com/Aneeshers/tennis-sackmann-archive/main/atp/atp_matches_{y}.csv",
+            "https://raw.githubusercontent.com/JeffSackmann/tennis_atp/master/atp_matches_{y}.csv",
             "https://raw.githubusercontent.com/azhou5849/tennis-atp-sackmann-data/master/atp_matches_{y}.csv",
             "https://raw.githubusercontent.com/beta2k/tennis_atp/master/atp_matches_{y}.csv",
             "https://raw.githubusercontent.com/FerrisPhilippi/tennis_atp_data/master/atp_matches_{y}.csv",
@@ -45,8 +48,8 @@ TOURS = {
         "primary": "http://www.tennis-data.co.uk/{y}w/{y}.xlsx",
         "genre": "wta",
         "mirrors": (
-            "https://raw.githubusercontent.com/JeffSackmann/tennis_wta/master/wta_matches_{y}.csv",
             "https://raw.githubusercontent.com/Aneeshers/tennis-sackmann-archive/main/wta/wta_matches_{y}.csv",
+            "https://raw.githubusercontent.com/JeffSackmann/tennis_wta/master/wta_matches_{y}.csv",
             "https://raw.githubusercontent.com/azhou5849/tennis-wta-sackmann-data/master/wta_matches_{y}.csv",
         ),
     },
@@ -300,8 +303,10 @@ def complete_set_count(values: dict[str, int | None]) -> int:
     )
 
 
-def score_is_decisive(values: dict[str, int | None], best_of: object) -> bool:
-    """Return True when the score gives the announced winner enough sets."""
+def score_is_decisive(values: dict[str, int | None], best_of: object, comment: str = "Completed") -> bool:
+    """Return True when the score gives the announced winner enough sets or is a valid retirement."""
+    if comment in ("Retired", "Walkover"):
+        return True
     try:
         best = int(float(best_of))
     except (TypeError, ValueError):
@@ -313,13 +318,22 @@ def score_is_decisive(values: dict[str, int | None], best_of: object) -> bool:
 
 
 def read_sackmann_raw(year: int, tour: str) -> tuple[pd.DataFrame, str]:
-    """Read the first available Sackmann-format mirror for a season."""
+    """Read the first available Sackmann-format mirror for a season, checking local cache first."""
+    cache_path = DATA / "sackmann" / f"{tour}_matches_{year}.csv"
     required = {"tourney_date", "winner_name", "loser_name", "score"}
+    if cache_path.exists():
+        try:
+            raw = pd.read_csv(cache_path, low_memory=False)
+            if required.issubset(raw.columns):
+                return raw, str(cache_path)
+        except Exception:  # noqa: BLE001
+            pass
+
     last_error: Exception | None = None
     for url_template in TOURS[tour]["mirrors"]:
         url = url_template.format(y=year)
         try:
-            raw = pd.read_csv(url)
+            raw = pd.read_csv(url, low_memory=False)
         except Exception as exc:  # noqa: BLE001
             last_error = exc
             continue
@@ -335,7 +349,7 @@ def sackmann_score_repairs(
     tour: str,
     surnames: dict[str, dict[str, str]],
 ) -> dict[tuple[str, str, str], dict[str, int | None]]:
-    """Build conservative score repairs for Valuebetennis partial scores."""
+    """Build score and ranking repairs for Valuebetennis from Sackmann records."""
     try:
         raw, _ = read_sackmann_raw(year, tour)
     except Exception:  # noqa: BLE001
@@ -348,11 +362,19 @@ def sackmann_score_repairs(
         match_date = pd.to_datetime(str(match.get("tourney_date")), format="%Y%m%d", errors="coerce")
         if pd.isna(match_date):
             continue
-        values = score_columns(match.get("score"))
-        if not score_is_decisive(values, match.get("best_of", 3)):
+        score_str = str(match.get("score") or "")
+        comment = "Retired" if "RET" in score_str else ("Walkover" if "W/O" in score_str else "Completed")
+        values = score_columns(score_str)
+        if not score_is_decisive(values, match.get("best_of", 3), comment=comment):
             continue
         winner = short_name_from_full(match.get("winner_name"), surnames)
         loser = short_name_from_full(match.get("loser_name"), surnames)
+        values["_comment"] = comment
+        values["_wrank"] = match.get("winner_rank")
+        values["_lrank"] = match.get("loser_rank")
+        values["_wpts"] = match.get("winner_rank_points")
+        values["_lpts"] = match.get("loser_rank_points")
+        values["_best_of"] = match.get("best_of", 3)
         if winner and loser:
             repairs[(f"date:{match_date.date().isoformat()}", winner, loser)] = values
             tournament_key = _tournament_key(match.get("tourney_name"))
@@ -386,25 +408,32 @@ def maybe_repair_score_from_sackmann(
     winner_full: object,
     loser_full: object,
     repairs: dict[tuple[str, str, str], dict[str, int | None]],
+    best_of: int = 3,
 ) -> tuple[dict[str, int | None], bool, int]:
     """Replace a partial Valuebetennis score with a complete Sackmann score when possible."""
     partial_score = bool(score_frame.pop("_partial", False))
     complete_sets = int(score_frame.pop("_complete_sets", 0) or 0)
-    if partial_score:
-        parsed_date = pd.to_datetime(match_date, errors="coerce")
-        keys: list[tuple[str, str, str]] = []
-        if not pd.isna(parsed_date):
-            keys.append((f"date:{parsed_date.date().isoformat()}", winner, loser))
-        tournament_key = _tournament_key(tournament)
-        if tournament_key:
-            keys.append((f"tournament:{tournament_key}", winner, loser))
-            keys.append((f"rawtournament:{tournament_key}", _name_key(winner_full), _name_key(loser_full)))
-        keys.append(("pair", winner, loser))
-        keys.append(("rawpair", _name_key(winner_full), _name_key(loser_full)))
-        for key in keys:
-            repaired = repairs.get(key)
-            if repaired:
-                return dict(repaired), False, complete_set_count(repaired)
+    target_sets = 3 if best_of >= 5 else 2
+
+    parsed_date = pd.to_datetime(match_date, errors="coerce")
+    keys: list[tuple[str, str, str]] = []
+    if not pd.isna(parsed_date):
+        keys.append((f"date:{parsed_date.date().isoformat()}", winner, loser))
+    tournament_key = _tournament_key(tournament)
+    if tournament_key:
+        keys.append((f"tournament:{tournament_key}", winner, loser))
+        keys.append((f"rawtournament:{tournament_key}", _name_key(winner_full), _name_key(loser_full)))
+    keys.append(("pair", winner, loser))
+    keys.append(("rawpair", _name_key(winner_full), _name_key(loser_full)))
+
+    for key in keys:
+        repaired = repairs.get(key)
+        if repaired:
+            res = dict(repaired)
+            rep_comment = str(res.get("_comment", "Completed"))
+            is_partial = rep_comment == "Retired" or (int(res.get("Wsets") or 0) < target_sets and rep_comment != "Retired")
+            return res, is_partial, complete_set_count(res)
+
     return score_frame, partial_score, complete_sets
 
 
@@ -471,19 +500,15 @@ def is_finished_set(a: int, b: int) -> bool:
     return high >= 10 or (high == 6 and low <= 4) or (high == 7 and low in (5, 6))
 
 
-def score_columns_from_valuebetennis(score: object, winner_is_player1: bool) -> dict[str, int | None]:
-    """Extract set scores when Valuebetennis scores are expressed player1-player2.
-
-    La source tronque le dernier set d'un match sur huit : « 5-7 3-6 7-5 6-3 5-5 » pour un
-    match gagné en cinq. Les sets inachevés sont écartés du décompte et le match est marqué
-    partiel, sinon le score affiché contredit le vainqueur annoncé.
-    """
+def score_columns_from_valuebetennis(score: object, winner_is_player1: bool) -> dict:
+    """Extract set scores when Valuebetennis scores are expressed player1-player2."""
+    tokens = str(score or "").split()
     values = {f"{side}{index}": None for index in range(1, 6) for side in ("W", "L")}
     winner_sets = 0
     loser_sets = 0
     complete_sets = 0
     partial = False
-    for index, token in enumerate(str(score or "").split()[:5], start=1):
+    for index, token in enumerate(tokens[:5], start=1):
         clean = token.split("(", 1)[0]
         if "-" not in clean:
             continue
@@ -525,15 +550,17 @@ def download_valuebetennis_fallback(year: int, destination: Path, tour: str = "a
         raw = pd.read_csv(response, sep=";")
 
     raw = raw[raw["genre"].astype(str).str.lower().eq(TOURS[tour]["genre"])].copy()
-    # Le fichier Valuebetennis descend jusqu'aux ITF. La source primaire couvre le seul
+    # Le fichier Valuebetennis descend jusqu'aux ITF et juniors. La source primaire couvre le seul
     # main tour : garder le même périmètre, sinon les métriques ne sont plus comparables
     # et le classement Elo mélange des circuits sans rapport.
     raw = raw[raw["categorie"].map(lambda c: valuebetennis_series(c, tour)).isin(MAIN_TOUR_SERIES)].copy()
+    raw = raw[~raw["tournoi"].astype(str).str.contains("juniors", case=False, na=False)].copy()
     raw["Date"] = pd.to_datetime(raw["date"], errors="coerce", utc=True).dt.tz_localize(None)
     raw = raw.dropna(subset=["Date", "joueur1", "joueur2", "vainqueur_id", "score"])
 
     surnames = known_surnames(exclude_year=year, tour=tour)
     score_repairs = sackmann_score_repairs(year, tour, surnames)
+    rankings_lookup = get_rankings_lookup(tour)
     rows = []
     for _, match in raw.iterrows():
         winner_is_player1 = str(match["vainqueur_id"]) == str(match["joueur1_id"])
@@ -544,6 +571,8 @@ def download_valuebetennis_fallback(year: int, destination: Path, tour: str = "a
         round_label = valuebetennis_round(match["tour"])
         if round_label in QUALIFYING_ROUNDS:
             continue
+        series_label = valuebetennis_series(match["categorie"], tour)
+        best_of = 5 if (tour == "atp" and series_label == "Grand Slam") else 3
         score_frame = score_columns_from_valuebetennis(match["score"], winner_is_player1)
         score_frame, partial_score, complete_sets = maybe_repair_score_from_sackmann(
             score_frame,
@@ -554,33 +583,60 @@ def download_valuebetennis_fallback(year: int, destination: Path, tour: str = "a
             winner_full,
             loser_full,
             score_repairs,
+            best_of=best_of,
         )
-        # Un abandon au premier set reste un résultat : il suffit d'un set terminé pour
-        # que le match compte. Sans set exploitable, la ligne n'apporte rien.
         if complete_sets < 1:
             continue
+
+        wrank = score_frame.pop("_wrank", None)
+        lrank = score_frame.pop("_lrank", None)
+        wpts = score_frame.pop("_wpts", None)
+        lpts = score_frame.pop("_lpts", None)
+        comment = score_frame.pop("_comment", "Retired" if partial_score else "Completed")
+        score_frame.pop("_best_of", None)
+
+        # Résolution des classements et points si absents de la source Sackmann
+        if pd.isna(wrank) or wrank is None:
+            r_val, p_val = rankings_lookup.get_rank_points(winner, match["Date"])
+            wrank = r_val if r_val is not None else pd.NA
+            if pd.isna(wpts) or wpts is None:
+                wpts = p_val if p_val is not None else pd.NA
+
+        if pd.isna(lrank) or lrank is None:
+            r_val, p_val = rankings_lookup.get_rank_points(loser, match["Date"])
+            lrank = r_val if r_val is not None else pd.NA
+            if pd.isna(lpts) or lpts is None:
+                lpts = p_val if p_val is not None else pd.NA
+
+        # Cotes de clôture avec repli sur les cotes d'ouverture si manquantes
         avg_w = match["cote1_cloture"] if winner_is_player1 else match["cote2_cloture"]
+        if pd.isna(avg_w) or str(avg_w).strip() in ("", "nan"):
+            avg_w = match.get("cote1_ouverture") if winner_is_player1 else match.get("cote2_ouverture")
+
         avg_l = match["cote2_cloture"] if winner_is_player1 else match["cote1_cloture"]
+        if pd.isna(avg_l) or str(avg_l).strip() in ("", "nan"):
+            avg_l = match.get("cote2_ouverture") if winner_is_player1 else match.get("cote1_ouverture")
+
         rows.append({
             "ATP": match["tournoi_id"],
             "Location": match["tournoi"],
             "Tournament": match["tournoi"],
             "Date": match["Date"],
-            "Series": valuebetennis_series(match["categorie"], tour),
+            "Series": series_label,
             "Court": "Outdoor",
             "Surface": valuebetennis_surface(match["surface"]),
             "Round": round_label,
             # La WTA joue au meilleur des 3 sets partout, Grands Chelems compris.
-            "Best of": 5 if (tour == "atp" and valuebetennis_series(match["categorie"], tour) == "Grand Slam") else 3,
+            "Best of": best_of,
             "Winner": winner,
             "Loser": loser,
-            "WRank": pd.NA,
-            "LRank": pd.NA,
-            "WPts": pd.NA,
-            "LPts": pd.NA,
+            "WRank": wrank,
+            "LRank": lrank,
+            "WPts": wpts,
+            "LPts": lpts,
             "AvgW": avg_w,
             "AvgL": avg_l,
-            "Comment": "Completed",
+            "Comment": comment,
             "ScoreStatus": "partial" if partial_score else "complete",
             **score_frame,
         })
