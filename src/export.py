@@ -6,6 +6,7 @@ Usage : python -m src.export
 from __future__ import annotations
 
 import json
+import math
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
@@ -455,6 +456,7 @@ def main(argv: list[str] | None = None) -> int:
         stakes = returns = kelly_bank = 0.0
         kelly_hist = 1.0
         n_bets = wins = 0
+        returns_list: list[float] = []
         for i in range(len(metas)):
             if not mask[i]:
                 continue
@@ -475,6 +477,8 @@ def main(argv: list[str] | None = None) -> int:
             n_bets += 1
             stakes += 1.0
             hit = best[2]
+            ret_item = (best[1] - 1.0) if hit else -1.0
+            returns_list.append(ret_item)
             if hit:
                 wins += 1
                 returns += best[1]
@@ -483,9 +487,42 @@ def main(argv: list[str] | None = None) -> int:
             f = max(0.0, min(0.1, 0.25 * (best[0] * b - (1 - best[0])) / b))
             kelly_hist *= (1 + f * b) if hit else (1 - f)
         roi = (returns - stakes) / stakes if stakes else 0.0
-        return {"n_bets": n_bets, "win_rate": round(wins / n_bets, 3) if n_bets else None,
-                "roi_flat": round(roi, 4), "kelly_final_bank": round(kelly_hist, 3),
-                "edge_min": edge_min, "conf_min": conf_min}
+
+        # Intervalles de confiance statistiques (Wilson pour le taux de gain, normal pour le ROI)
+        win_rate = round(wins / n_bets, 3) if n_bets else None
+        win_rate_ci95 = None
+        roi_ci95 = None
+        roi_se = 0.0
+        t_stat = 0.0
+        p_val = 1.0
+        if n_bets > 0:
+            p_hat = wins / n_bets
+            z = 1.95996
+            denom_w = 1.0 + (z**2) / n_bets
+            ctr_w = (p_hat + (z**2) / (2.0 * n_bets)) / denom_w
+            hw_w = (z * math.sqrt((p_hat * (1.0 - p_hat) / n_bets) + ((z**2) / (4.0 * (n_bets**2))))) / denom_w
+            win_rate_ci95 = [round(max(0.0, ctr_w - hw_w), 3), round(min(1.0, ctr_w + hw_w), 3)]
+
+            r_arr = np.array(returns_list, dtype=float)
+            s = float(r_arr.std(ddof=1)) if n_bets > 1 else 0.0
+            roi_se = round(s / math.sqrt(n_bets), 4) if n_bets > 0 else 0.0
+            roi_ci95 = [round(roi - z * roi_se, 4), round(roi + z * roi_se, 4)]
+            t_stat = round(roi / roi_se, 2) if roi_se > 0 else 0.0
+            p_val = round(float(1.0 - 0.5 * (1.0 + math.erf(t_stat / math.sqrt(2.0)))), 4) if roi_se > 0 else 1.0
+
+        return {
+            "n_bets": n_bets,
+            "win_rate": win_rate,
+            "win_rate_ci95": win_rate_ci95,
+            "roi_flat": round(roi, 4),
+            "roi_flat_ci95": roi_ci95,
+            "roi_se": roi_se,
+            "roi_t_stat": t_stat,
+            "roi_p_value": p_val,
+            "kelly_final_bank": round(kelly_hist, 3),
+            "edge_min": edge_min,
+            "conf_min": conf_min,
+        }
 
     def _select_betting_threshold():
         best = None

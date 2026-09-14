@@ -8,6 +8,7 @@
 from __future__ import annotations
 
 from collections import defaultdict
+from typing import Any
 
 INITIAL = 1500.0
 SURFACES = ("Hard", "Clay", "Grass")
@@ -26,15 +27,34 @@ class TennisElo:
         self.surf: dict[str, dict[str, float]] = {s: defaultdict(lambda: INITIAL) for s in SURFACES}
         self.count: dict[str, int] = defaultdict(int)
         self.surf_count: dict[str, dict[str, int]] = {s: defaultdict(int) for s in SURFACES}
+        self.last_date: dict[str, Any] = {}
 
     @staticmethod
     def _expect(ra: float, rb: float) -> float:
         return 1.0 / (1.0 + 10 ** ((rb - ra) / 400.0))
 
-    def prob(self, a: str, b: str, surface: str) -> float:
-        """Probabilité que `a` batte `b` (blend global + surface)."""
+    def get_effective_rating(self, player: str, current_date=None) -> float:
+        """Calcule l'Elo effectif en appliquant un léger amortissement après inactivité prolongée (> 90 jours)."""
+        base = self.rating[player]
+        if current_date is None or player not in self.last_date or self.last_date[player] is None:
+            return base
+        try:
+            delta_days = (current_date - self.last_date[player]).days
+        except AttributeError:
+            return base
+        if delta_days > 90:
+            excess_months = (delta_days - 90) / 30.0
+            # Régression vers 1500 de 3 % par mois d'inactivité excédentaire, plafonnée à 100 points
+            decay = max(-100.0, min(100.0, 0.03 * (base - INITIAL) * excess_months))
+            return base - decay
+        return base
+
+    def prob(self, a: str, b: str, surface: str, date=None) -> float:
+        """Probabilité que `a` batte `b` (blend global + surface), avec decay d'inactivité optionnel."""
         s = norm_surface(surface)
-        pg = self._expect(self.rating[a], self.rating[b])
+        ra = self.get_effective_rating(a, date)
+        rb = self.get_effective_rating(b, date)
+        pg = self._expect(ra, rb)
         ps = self._expect(self.surf[s][a], self.surf[s][b])
         return (1 - SURFACE_WEIGHT) * pg + SURFACE_WEIGHT * ps
 
@@ -42,7 +62,7 @@ class TennisElo:
     def _k(matches: int) -> float:
         return 250.0 / ((matches + 5) ** 0.4)
 
-    def update(self, winner: str, loser: str, surface: str, series: str) -> None:
+    def update(self, winner: str, loser: str, surface: str, series: str, date=None) -> None:
         s = norm_surface(surface)
         lvl = LEVEL_K.get(str(series), 0.9)
         # global
@@ -57,3 +77,8 @@ class TennisElo:
         self.surf[s][loser] -= lvl * self._k(self.surf_count[s][loser]) * (1 - es)
         self.surf_count[s][winner] += 1
         self.surf_count[s][loser] += 1
+        # suivi temporel
+        if date is not None:
+            self.last_date[winner] = date
+            self.last_date[loser] = date
+
