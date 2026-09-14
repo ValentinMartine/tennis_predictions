@@ -39,11 +39,11 @@ ATP,Location,Tournament,Date,Series,Court,Surface,Round,Best of,Winner,Loser,WRa
 ,,Wimbledon,2026-07-01,Grand Slam,Outdoor,Grass,Round of 128,5,Tiafoe F.,Atmane T.,26.0,50.0,,,3,1,Completed,7,6,6,1,4.0,6.0,6.0,4.0,,,1.23,4.63
 ,,Wimbledon,2026-07-01,Grand Slam,Outdoor,Grass,Round of 64,5,Mochizuki S.,Quinn E.,117.0,63.0,,,3,0,Completed,6,2,7,6,7.0,5.0,,,,,3.6,1.339
 ,,Wimbledon,2026-07-01,Grand Slam,Outdoor,Grass,Round of 64,5,Auger-Aliassime F.,Prizmic D.,4.0,72.0,,,3,0,Completed,7,6,6,3,7.0,5.0,,,,,1.194,5.36
-,,Wimbledon,2026-07-01,Grand Slam,Outdoor,Grass,Round of 64,5,Djokovic N.,Tsitsipas S.,4.0,88.0,,,3,0,Completed,6,3,6,4,6.0,2.0,,,,,,
-,,Wimbledon,2026-07-02,Grand Slam,Outdoor,Grass,Round of 64,5,Fery A.,Virtanen O.,118.0,158.0,,,3,1,Completed,5,7,7,6,6.0,3.0,6.0,3.0,,,,
-,,Wimbledon,2026-07-02,Grand Slam,Outdoor,Grass,Round of 64,5,Sonego L.,Diallo G.,72.0,91.0,,,3,2,Completed,7,6,4,6,7.0,6.0,6.0,7.0,6.0,2.0,,
-,,Wimbledon,2026-07-02,Grand Slam,Outdoor,Grass,Round of 64,5,de Minaur A.,Mannarino A.,,40.0,,,3,0,Completed,6,3,6,2,6.0,2.0,,,,,,
-,,Wimbledon,2026-07-02,Grand Slam,Outdoor,Grass,Round of 64,5,Fritz T.,Kypson P.,9.0,89.0,,,3,0,Completed,6,2,6,2,7.0,5.0,,,,,,
+,,Wimbledon,2026-07-01,Grand Slam,Outdoor,Grass,Round of 64,5,Djokovic N.,Tsitsipas S.,4.0,88.0,,,3,0,Completed,6,3,6,4,6.0,2.0,,,,,1.15,5.5
+,,Wimbledon,2026-07-02,Grand Slam,Outdoor,Grass,Round of 64,5,Fery A.,Virtanen O.,118.0,158.0,,,3,1,Completed,5,7,7,6,6.0,3.0,6.0,3.0,,,2.3,1.62
+,,Wimbledon,2026-07-02,Grand Slam,Outdoor,Grass,Round of 64,5,Sonego L.,Diallo G.,72.0,91.0,,,3,2,Completed,7,6,4,6,7.0,6.0,6.0,7.0,6.0,2.0,1.55,2.45
+,,Wimbledon,2026-07-02,Grand Slam,Outdoor,Grass,Round of 64,5,de Minaur A.,Mannarino A.,,40.0,,,3,0,Completed,6,3,6,2,6.0,2.0,,,,,1.223,4.84
+,,Wimbledon,2026-07-02,Grand Slam,Outdoor,Grass,Round of 64,5,Fritz T.,Kypson P.,9.0,89.0,,,3,0,Completed,6,2,6,2,7.0,5.0,,,,,1.08,8.0
 ,,Wimbledon,2026-07-02,Grand Slam,Outdoor,Grass,Round of 64,5,Bergs Z.,Faria J.,48.0,115.0,,,3,1,Completed,7,6,4,6,6.0,2.0,6.0,3.0,,,1.562,2.57
 ,,Wimbledon,2026-07-02,Grand Slam,Outdoor,Grass,Round of 64,5,Svajda Z.,Majchrzak K.,69.0,47.0,,,3,2,Completed,2,6,6,2,6.0,7.0,6.0,4.0,6.0,3.0,2.57,1.565
 ,,Wimbledon,2026-07-02,Grand Slam,Outdoor,Grass,Round of 64,5,Struff J.,Nakashima B.,,32.0,,,3,2,Completed,4,6,7,6,7.0,6.0,6.0,7.0,7.0,6.0,3.92,1.3
@@ -54,28 +54,28 @@ ATP,Location,Tournament,Date,Series,Court,Surface,Round,Best of,Winner,Loser,WRa
 ,,Wimbledon,2026-07-02,Grand Slam,Outdoor,Grass,Round of 64,5,Berrettini M.,Fils A.,105.0,17.0,,,3,1,Completed,6,4,7,5,3.0,6.0,6.0,3.0,,,2.84,1.485
 ,,Wimbledon,2026-07-02,Grand Slam,Outdoor,Grass,Round of 64,5,Cobolli F.,Duckworth J.,10.0,79.0,,,3,1,Completed,7,6,3,6,7.0,6.0,6.0,1.0,,,1.4,3.23
 ,,Wimbledon,2026-07-02,Grand Slam,Outdoor,Grass,Round of 64,5,Khachanov K.,Hanfmann Y.,18.0,55.0,,,3,0,Completed,6,3,6,4,6.0,4.0,,,,,1.595,2.51
-,,Wimbledon,2026-07-02,Grand Slam,Outdoor,Grass,Round of 64,5,Lehecka J.,Molcan A.,12.0,102.0,,,3,0,Completed,6,3,6,2,6.0,4.0,,,,,,
-,,Wimbledon,2026-07-02,Grand Slam,Outdoor,Grass,Round of 64,5,Tiafoe F.,Choinski J.,26.0,106.0,,,3,1,Completed,4,6,6,2,7.0,5.0,6.0,2.0,,,,
-,,Wimbledon,2026-07-02,Grand Slam,Outdoor,Grass,Round of 64,5,Dimitrov G.,Mensik J.,164.0,16.0,,,3,1,Completed,7,6,4,6,7.0,5.0,6.0,3.0,,,,
-,,Wimbledon,2026-07-02,Grand Slam,Outdoor,Grass,Round of 64,5,Bublik A.,Jacquet K.,11.0,147.0,,,3,0,Completed,6,3,6,4,7.0,6.0,,,,,,
+,,Wimbledon,2026-07-02,Grand Slam,Outdoor,Grass,Round of 64,5,Lehecka J.,Molcan A.,12.0,102.0,,,3,0,Completed,6,3,6,2,6.0,4.0,,,,,1.182,5.63
+,,Wimbledon,2026-07-02,Grand Slam,Outdoor,Grass,Round of 64,5,Tiafoe F.,Choinski J.,26.0,106.0,,,3,1,Completed,4,6,6,2,7.0,5.0,6.0,2.0,,,1.2,4.6
+,,Wimbledon,2026-07-02,Grand Slam,Outdoor,Grass,Round of 64,5,Dimitrov G.,Mensik J.,164.0,16.0,,,3,1,Completed,7,6,4,6,7.0,5.0,6.0,3.0,,,1.35,3.25
+,,Wimbledon,2026-07-02,Grand Slam,Outdoor,Grass,Round of 64,5,Bublik A.,Jacquet K.,11.0,147.0,,,3,0,Completed,6,3,6,4,7.0,6.0,,,,,1.18,5.0
 ,,Wimbledon,2026-07-03,Grand Slam,Outdoor,Grass,Round of 32,5,Safiullin R.,Fonseca J.,135.0,25.0,,,3,0,Completed,6,3,6,3,6.0,3.0,,,,,4.0,1.292
 ,,Wimbledon,2026-06-30,Grand Slam,Outdoor,Grass,Round of 128,5,Virtanen O.,Shelton B.,158.0,5.0,,,3,2,Completed,6,4,3,6,6.0,7.0,6.0,2.0,7.0,6.0,4.67,1.227
 ,,Wimbledon,2026-06-30,Grand Slam,Outdoor,Grass,Round of 128,5,De Jong J.,Hijikata R.,106.0,104.0,,,3,2,Completed,7,6,3,6,5.0,7.0,6.0,4.0,6.0,3.0,3.44,1.353
 ,,Wimbledon,2026-06-30,Grand Slam,Outdoor,Grass,Round of 128,5,Fery A.,Dzumhur D.,118.0,104.0,,,3,1,Completed,3,6,6,2,6.0,2.0,6.0,1.0,,,1.223,4.74
 ,,Wimbledon,2026-06-30,Grand Slam,Outdoor,Grass,Round of 128,5,Svajda Z.,Llamas Ruiz P.,69.0,122.0,,,3,0,Completed,6,1,6,2,6.0,4.0,,,,,1.333,3.36
 ,,Wimbledon,2026-06-30,Grand Slam,Outdoor,Grass,Round of 128,5,Diallo G.,Bonzi B.,91.0,99.0,,,2,2,Completed,1,6,4,6,7.0,6.0,6.0,3.0,3.0,1.0,1.943,1.943
-,,Wimbledon,2026-06-30,Grand Slam,Outdoor,Grass,Round of 128,5,Fritz T.,Lajovic D.,9.0,138.0,,,3,0,Completed,6,3,6,4,6.0,3.0,,,,,,
+,,Wimbledon,2026-06-30,Grand Slam,Outdoor,Grass,Round of 128,5,Fritz T.,Lajovic D.,9.0,138.0,,,3,0,Completed,6,3,6,4,6.0,3.0,,,,,1.043,13.71
 ,,Wimbledon,2026-06-30,Grand Slam,Outdoor,Grass,Round of 128,5,Bublik A.,Kokkinakis T.,11.0,855.0,,,3,2,Completed,4,6,6,3,6.0,7.0,6.0,3.0,6.0,4.0,1.42,3.08
 ,,Wimbledon,2026-06-30,Grand Slam,Outdoor,Grass,Round of 128,5,Bergs Z.,Humbert U.,48.0,30.0,,,3,2,Completed,6,2,7,5,4.0,6.0,3.0,6.0,6.0,3.0,2.78,1.493
 ,,Wimbledon,2026-06-30,Grand Slam,Outdoor,Grass,Round of 128,5,Jacquet K.,Gaubas V.,147.0,133.0,,,3,0,Completed,6,3,6,4,7.0,6.0,,,,,1.379,3.29
 ,,Wimbledon,2026-06-30,Grand Slam,Outdoor,Grass,Round of 128,5,Nakashima B.,Pinnington Jones J.,32.0,145.0,,,3,0,Completed,6,3,7,6,7.0,5.0,,,,,1.238,4.52
 ,,Wimbledon,2026-06-30,Grand Slam,Outdoor,Grass,Round of 128,5,Munar J.,Cerundolo F.,44.0,27.0,,,3,0,Completed,6,1,6,4,6.0,3.0,,,,,3.97,1.287
 ,,Wimbledon,2026-06-30,Grand Slam,Outdoor,Grass,Round of 128,5,Khachanov K.,Harris B.,18.0,131.0,,,3,1,Completed,6,3,5,7,6.0,3.0,6.0,3.0,,,1.321,3.68
-,,Wimbledon,2026-06-30,Grand Slam,Outdoor,Grass,Round of 128,5,Kypson P.,McDonald M.,89.0,125.0,,,3,1,Completed,3,6,6,1,6.0,4.0,6.0,4.0,,,,
+,,Wimbledon,2026-06-30,Grand Slam,Outdoor,Grass,Round of 128,5,Kypson P.,McDonald M.,89.0,125.0,,,3,1,Completed,3,6,6,1,6.0,4.0,6.0,4.0,,,3.38,1.364
 ,,Wimbledon,2026-06-30,Grand Slam,Outdoor,Grass,Round of 128,5,Mensik J.,Samuel T.,16.0,142.0,,,3,2,Completed,5,7,6,3,6.0,3.0,3.0,6.0,7.0,6.0,1.437,3.0
 ,,Wimbledon,2026-06-30,Grand Slam,Outdoor,Grass,Round of 128,5,Sonego L.,Etcheverry T.,72.0,32.0,,,3,1,Completed,6,4,6,4,6.0,7.0,7.0,6.0,,,1.781,2.14
 ,,Wimbledon,2026-06-30,Grand Slam,Outdoor,Grass,Round of 128,5,Giron M.,Moutet C.,86.0,36.0,,,3,1,Completed,4,6,6,4,7.0,5.0,6.0,4.0,,,1.769,2.16
-,,Wimbledon,2026-06-30,Grand Slam,Outdoor,Grass,Round of 128,5,Zverev A.,Blockx A.,3.0,37.0,,,3,1,Completed,6,4,6,7,7.0,6.0,7.0,6.0,,,,
+,,Wimbledon,2026-06-30,Grand Slam,Outdoor,Grass,Round of 128,5,Zverev A.,Blockx A.,3.0,37.0,,,3,1,Completed,6,4,6,7,7.0,6.0,7.0,6.0,,,1.256,4.39
 ,,Wimbledon,2026-06-30,Grand Slam,Outdoor,Grass,Round of 128,5,Fils A.,Collignon R.,17.0,43.0,,,3,0,Completed,7,5,6,1,6.0,3.0,,,,,1.709,2.26
 ,,Wimbledon,2026-06-30,Grand Slam,Outdoor,Grass,Round of 128,5,Duckworth J.,Griekspoor T.,79.0,40.0,,,3,1,Completed,6,4,4,6,7.0,5.0,6.0,4.0,,,2.85,1.476
 ,,Wimbledon,2026-06-30,Grand Slam,Outdoor,Grass,Round of 128,5,Berrettini M.,Wawrinka S.,105.0,113.0,,,3,1,Completed,6,7,7,6,7.0,6.0,7.0,6.0,,,1.226,4.69
@@ -84,7 +84,7 @@ ATP,Location,Tournament,Date,Series,Court,Surface,Round,Best of,Winner,Loser,WRa
 ,,Wimbledon,2026-06-30,Grand Slam,Outdoor,Grass,Round of 128,5,Choinski J.,Kopriva V.,106.0,68.0,,,3,0,Completed,6,3,7,5,6.0,2.0,,,,,2.26,1.704
 ,,Wimbledon,2026-07-01,Grand Slam,Outdoor,Grass,Round of 64,5,Brooksby J.,Buse I.,67.0,34.0,,,3,0,Completed,6,2,6,2,6.0,3.0,,,,,1.658,2.37
 ,,Wimbledon,2026-07-01,Grand Slam,Outdoor,Grass,Round of 64,5,Fucsovics M.,Tien L.,76.0,19.0,,,3,1,Completed,6,7,6,4,7.0,6.0,6.0,3.0,,,3.47,1.358
-,,Wimbledon,2026-07-01,Grand Slam,Outdoor,Grass,Round of 64,5,Paul T.,Kwon S.,28.0,,,,3,0,Completed,6,3,7,6,6.0,2.0,,,,,,
+,,Wimbledon,2026-07-01,Grand Slam,Outdoor,Grass,Round of 64,5,Paul T.,Kwon S.,28.0,,,,3,0,Completed,6,3,7,6,6.0,2.0,,,,,1.132,6.94
 ,,Wimbledon,2026-07-01,Grand Slam,Outdoor,Grass,Round of 64,5,Hurkacz H.,Ofner S.,103.0,112.0,,,3,0,Completed,7,6,6,4,6.0,4.0,,,,,1.285,4.06
 ,,Wimbledon,2026-07-01,Grand Slam,Outdoor,Grass,Round of 64,5,Zheng M.,Mejia N.,146.0,244.0,,,3,1,Completed,6,7,7,6,6.0,1.0,6.0,4.0,,,1.225,4.81
 ,,Wimbledon,2026-07-01,Grand Slam,Outdoor,Grass,Round of 128,5,Molcan A.,Altmaier D.,102.0,59.0,,,3,1,Completed,6,4,3,6,7.0,5.0,6.0,2.0,,,2.01,1.877
@@ -96,18 +96,18 @@ ATP,Location,Tournament,Date,Series,Court,Surface,Round,Best of,Winner,Loser,WRa
 ,,Wimbledon,2026-06-29,Grand Slam,Outdoor,Grass,Round of 128,5,Ofner S.,Medjedovic H.,112.0,67.0,,,3,2,Completed,1,6,6,2,4.0,6.0,6.0,3.0,6.0,4.0,2.84,1.476
 ,,Wimbledon,2026-06-29,Grand Slam,Outdoor,Grass,Round of 128,5,Hurkacz H.,Ruud C.,103.0,16.0,,,3,0,Completed,6,4,6,2,7.0,6.0,,,,,1.485,2.81
 ,,Wimbledon,2026-06-29,Grand Slam,Outdoor,Grass,Round of 128,5,Sinner J.,Kecmanovic M.,1.0,51.0,,,3,2,Completed,4,6,6,3,6.0,7.0,6.0,2.0,6.0,3.0,1.019,23.87
-,,Wimbledon,2026-06-29,Grand Slam,Outdoor,Grass,Round of 128,5,Fonseca J.,Bautista Agut R.,25.0,116.0,,,3,0,Completed,7,6,6,4,6.0,3.0,,,,,,
+,,Wimbledon,2026-06-29,Grand Slam,Outdoor,Grass,Round of 128,5,Fonseca J.,Bautista Agut R.,25.0,116.0,,,3,0,Completed,7,6,6,4,6.0,3.0,,,,,1.9,1.9
 ,,Wimbledon,2026-06-29,Grand Slam,Outdoor,Grass,Round of 128,5,Borges N.,Boyer T.,53.0,113.0,,,3,0,Completed,6,3,7,5,7.0,5.0,,,,,1.331,3.6
 ,,Wimbledon,2026-06-29,Grand Slam,Outdoor,Grass,Round of 128,5,Rinderknech A.,Tarvet O.,24.0,733.0,,,3,1,Completed,7,6,7,6,4.0,6.0,7.0,5.0,,,1.699,2.27
 ,,Wimbledon,2026-06-29,Grand Slam,Outdoor,Grass,Round of 128,5,Prizmic D.,Walton A.,72.0,92.0,,,3,1,Completed,4,6,7,6,6.0,4.0,6.0,2.0,,,1.725,2.23
 ,,Wimbledon,2026-06-29,Grand Slam,Outdoor,Grass,Round of 128,5,Quinn E.,Darderi L.,63.0,16.0,,,3,0,Completed,7,6,7,5,6.0,2.0,,,,,1.568,2.56
-,,Wimbledon,2026-06-29,Grand Slam,Outdoor,Grass,Round of 128,5,Kwon S.,Landaluce M.,,58.0,,,3,0,Completed,6,4,6,3,6.0,3.0,,,,,,
+,,Wimbledon,2026-06-29,Grand Slam,Outdoor,Grass,Round of 128,5,Kwon S.,Landaluce M.,,58.0,,,3,0,Completed,6,4,6,3,6.0,3.0,,,,,2.4,1.633
 ,,Wimbledon,2026-06-29,Grand Slam,Outdoor,Grass,Round of 128,5,Struff J.,Baez S.,,64.0,,,3,2,Completed,6,1,7,6,4.0,6.0,2.0,6.0,7.0,5.0,1.388,3.24
-,,Wimbledon,2026-06-29,Grand Slam,Outdoor,Grass,Round of 128,5,Tsitsipas S.,Gaston H.,88.0,118.0,,,3,0,Completed,6,1,6,4,6.0,2.0,,,,,,
-,,Wimbledon,2026-06-29,Grand Slam,Outdoor,Grass,Round of 128,5,Marozsan F.,Tirante T.,62.0,,,,3,0,Completed,7,5,6,3,6.0,4.0,,,,,,
+,,Wimbledon,2026-06-29,Grand Slam,Outdoor,Grass,Round of 128,5,Tsitsipas S.,Gaston H.,88.0,118.0,,,3,0,Completed,6,1,6,4,6.0,2.0,,,,,1.18,5.0
+,,Wimbledon,2026-06-29,Grand Slam,Outdoor,Grass,Round of 128,5,Marozsan F.,Tirante T.,62.0,,,,3,0,Completed,7,5,6,3,6.0,4.0,,,,,1.493,2.78
 ,,Wimbledon,2026-06-29,Grand Slam,Outdoor,Grass,Round of 128,5,Medvedev D.,Cilic M.,7.0,46.0,,,3,0,Completed,6,1,6,2,6.0,4.0,,,,,1.345,3.5
-,,Wimbledon,2026-06-29,Grand Slam,Outdoor,Grass,Round of 128,5,Mejia N.,Vallejo A.,244.0,,,,3,1,Completed,4,6,6,4,7.0,5.0,7.0,6.0,,,,
-,,Wimbledon,2026-06-29,Grand Slam,Outdoor,Grass,Round of 128,5,Davidovich Fokina A.,Cerundolo J.,25.0,,,,3,0,Completed,6,4,6,4,7.0,6.0,,,,,,
+,,Wimbledon,2026-06-29,Grand Slam,Outdoor,Grass,Round of 128,5,Mejia N.,Vallejo A.,244.0,,,,3,1,Completed,4,6,6,4,7.0,5.0,7.0,6.0,,,2.27,1.704
+,,Wimbledon,2026-06-29,Grand Slam,Outdoor,Grass,Round of 128,5,Davidovich Fokina A.,Cerundolo J.,25.0,,,,3,0,Completed,6,4,6,4,7.0,6.0,,,,,1.256,4.29
 ,,Wimbledon,2026-06-29,Grand Slam,Outdoor,Grass,Round of 128,5,Auger-Aliassime F.,Shevchenko A.,4.0,88.0,,,3,0,Completed,6,3,6,1,6.0,4.0,,,,,1.028,18.51
 ,,Wimbledon,2026-06-29,Grand Slam,Outdoor,Grass,Round of 128,5,Djokovic N.,Wu Y.,4.0,101.0,,,3,1,Completed,6,4,5,7,6.0,4.0,6.0,4.0,,,1.063,10.59
 ,,Wimbledon,2026-06-30,Grand Slam,Outdoor,Grass,Round of 128,5,Royer V.,Wendelken H.,75.0,224.0,,,3,1,Completed,4,6,6,3,6.0,3.0,6.0,3.0,,,1.8,2.11
@@ -124,14 +124,14 @@ ATP,Location,Tournament,Date,Series,Court,Surface,Round,Best of,Winner,Loser,WRa
 ,,Wimbledon,2026-06-29,Grand Slam,Outdoor,Grass,Round of 128,5,Van de Zandschulp B.,Kovacevic A.,,70.0,,,3,1,Completed,6,3,6,7,6.0,4.0,6.0,0.0,,,1.556,2.59
 ,,Wimbledon,2026-06-29,Grand Slam,Outdoor,Grass,Round of 128,5,Buse I.,Nava E.,34.0,94.0,,,3,1,Completed,7,6,3,6,7.0,5.0,6.0,0.0,,,1.658,2.35
 ,,Wimbledon,2026-06-29,Grand Slam,Outdoor,Grass,Round of 128,5,Tien L.,Svrcina D.,19.0,116.0,,,3,1,Completed,6,1,6,4,6.0,7.0,6.0,3.0,,,1.11,7.45
-16866.0,New York,U.S. Open - New York,2026-09-11,Grand Slam,Outdoor,Hard,Semifinals,5,Zverev A.,Khachanov K.,2.0,50.0,,,3,0,Completed,6,3,7,6,7.0,6.0,,,,,,
+16866.0,New York,U.S. Open - New York,2026-09-11,Grand Slam,Outdoor,Hard,Semifinals,5,Zverev A.,Khachanov K.,2.0,50.0,,,3,0,Completed,6,3,7,6,7.0,6.0,,,,,1.2,5.25
 16866.0,New York,U.S. Open - New York,2026-09-08,Grand Slam,Outdoor,Hard,4th Round,5,Zverev A.,Darderi L.,2.0,21.0,,,3,0,Completed,6,2,6,2,7.0,6.0,,,,,1.088,7.55
 16866.0,New York,U.S. Open - New York,2026-09-08,Grand Slam,Outdoor,Hard,4th Round,5,Khachanov K.,Tien L.,50.0,14.0,,,3,2,Completed,7,5,4,6,6.0,7.0,6.0,1.0,6.0,4.0,2.61,1.562
 16866.0,New York,U.S. Open - New York,2026-09-08,Grand Slam,Outdoor,Hard,Quarterfinals,5,Tiafoe F.,Michelsen A.,8.0,26.0,,,3,2,Completed,5,7,3,6,7.0,5.0,6.0,3.0,7.0,6.0,1.654,2.38
 16866.0,New York,U.S. Open - New York,2026-09-09,Grand Slam,Outdoor,Hard,Quarterfinals,5,Shelton B.,Alcaraz C.,5.0,3.0,,,3,2,Completed,6,7,6,1,6.0,3.0,1.0,6.0,7.0,6.0,3.95,1.297
 16866.0,New York,U.S. Open - New York,2026-09-10,Grand Slam,Outdoor,Hard,Quarterfinals,5,Khachanov K.,Blockx A.,50.0,28.0,,,2,0,Retired,6,2,7,5,3.0,2.0,,,,,1.532,2.6
-16866.0,New York,U.S. Open - New York,2026-09-12,Grand Slam,Outdoor,Hard,Semifinals,5,Shelton B.,Tiafoe F.,9.0,11.0,,,3,1,Completed,4,6,6,3,6.0,3.0,7.0,5.0,,,,
-16866.0,New York,U.S. Open - New York,2026-09-13,Grand Slam,Outdoor,Hard,The Final,5,Zverev A.,Shelton B.,2.0,9.0,,,3,1,Completed,6,3,7,6,5.0,7.0,6.0,2.0,,,,
+16866.0,New York,U.S. Open - New York,2026-09-12,Grand Slam,Outdoor,Hard,Semifinals,5,Shelton B.,Tiafoe F.,9.0,11.0,,,3,1,Completed,4,6,6,3,6.0,3.0,7.0,5.0,,,1.37,3.39
+16866.0,New York,U.S. Open - New York,2026-09-13,Grand Slam,Outdoor,Hard,The Final,5,Zverev A.,Shelton B.,2.0,9.0,,,3,1,Completed,6,3,7,6,5.0,7.0,6.0,2.0,,,1.714,2.27
 ,,French Open - Paris,2026-06-03,Grand Slam,Outdoor,Clay,Quarterfinals,5,Arnaldi M.,Berrettini M.,,,,,1,0,Retired,7,5,5,2,,,,,,,1.556,2.63
 ,,French Open - Paris,2026-06-07,Grand Slam,Outdoor,Clay,The Final,5,Zverev A.,Cobolli F.,2.0,10.0,,,3,2,Completed,6,1,4,6,6.0,4.0,6.0,7.0,6.0,1.0,1.208,5.09
 ,,Wimbledon,2026-06-29,Grand Slam,Outdoor,Grass,Round of 128,5,Carreno Busta P.,Shapovalov D.,89.0,41.0,,,2,0,Completed,6,3,7,6,,,,,,,3.14,1.407

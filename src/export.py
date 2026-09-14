@@ -606,9 +606,9 @@ def main(argv: list[str] | None = None) -> int:
             ),
             "score": m["score"],
             "retired": _text_or_empty(m.get("comment")) == "Retired",
-            # La source de secours tronque le dernier set d'un match sur huit : le dire
-            # plutôt que d'afficher un score qui contredit le vainqueur.
-            "score_partial": _text_or_empty(m.get("score_status")) == "partial",
+            # Les abandons sont déjà explicités par le statut 'retired' ; 'score_partial'
+            # n'est activé que si le flux a été tronqué hors abandon.
+            "score_partial": _text_or_empty(m.get("score_status")) == "partial" and _text_or_empty(m.get("comment")) != "Retired",
         })
 
     tournament_last_date = {}
