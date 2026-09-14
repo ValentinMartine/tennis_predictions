@@ -1,5 +1,5 @@
 {
-  "checked_at": "2026-09-14T18:11:04+00:00",
+  "checked_at": "2026-09-14T19:58:00+00:00",
   "tour": "atp",
   "primary_source": "tennis-data.co.uk",
   "fresh_csv_fallback": "Valuebetennis",
@@ -203,7 +203,7 @@
       "ok": true,
       "url": "https://www.valuebetennis.com/datasets/valuebetennis-matchs-2026.csv",
       "latest_match_date": "2026-09-13",
-      "rows": 1905,
+      "rows": 1894,
       "primary_error": "HTTP Error 503: Service Temporarily Unavailable",
       "error": null
     }

@@ -375,6 +375,8 @@ def sackmann_score_repairs(
         values["_wpts"] = match.get("winner_rank_points")
         values["_lpts"] = match.get("loser_rank_points")
         values["_best_of"] = match.get("best_of", 3)
+        values["_tourney_date"] = match_date
+        values["_tourney_name"] = match.get("tourney_name")
         if winner and loser:
             repairs[(f"date:{match_date.date().isoformat()}", winner, loser)] = values
             tournament_key = _tournament_key(match.get("tourney_name"))
@@ -415,24 +417,41 @@ def maybe_repair_score_from_sackmann(
     complete_sets = int(score_frame.pop("_complete_sets", 0) or 0)
     target_sets = 3 if best_of >= 5 else 2
 
-    parsed_date = pd.to_datetime(match_date, errors="coerce")
-    keys: list[tuple[str, str, str]] = []
-    if not pd.isna(parsed_date):
-        keys.append((f"date:{parsed_date.date().isoformat()}", winner, loser))
-    tournament_key = _tournament_key(tournament)
-    if tournament_key:
-        keys.append((f"tournament:{tournament_key}", winner, loser))
-        keys.append((f"rawtournament:{tournament_key}", _name_key(winner_full), _name_key(loser_full)))
-    keys.append(("pair", winner, loser))
-    keys.append(("rawpair", _name_key(winner_full), _name_key(loser_full)))
+    already_decisive = not partial_score and int(score_frame.get("Wsets") or 0) >= target_sets
 
-    for key in keys:
+    parsed_date = pd.to_datetime(match_date, errors="coerce")
+    tournament_key = _tournament_key(tournament)
+
+    # 1. Correspondance stricte : date et/ou tournoi
+    strict_keys: list[tuple[str, str, str]] = []
+    if not pd.isna(parsed_date):
+        strict_keys.append((f"date:{parsed_date.date().isoformat()}", winner, loser))
+    if tournament_key:
+        strict_keys.append((f"tournament:{tournament_key}", winner, loser))
+        strict_keys.append((f"rawtournament:{tournament_key}", _name_key(winner_full), _name_key(loser_full)))
+
+    for key in strict_keys:
         repaired = repairs.get(key)
         if repaired:
             res = dict(repaired)
             rep_comment = str(res.get("_comment", "Completed"))
             is_partial = rep_comment == "Retired" or (int(res.get("Wsets") or 0) < target_sets and rep_comment != "Retired")
             return res, is_partial, complete_set_count(res)
+
+    # 2. Correspondance lâche (pair / rawpair)
+    if not already_decisive:
+        loose_keys = [("pair", winner, loser), ("rawpair", _name_key(winner_full), _name_key(loser_full))]
+        for key in loose_keys:
+            repaired = repairs.get(key)
+            if repaired:
+                rep_date = pd.to_datetime(str(repaired.get("_tourney_date", "")), errors="coerce")
+                if not pd.isna(parsed_date) and not pd.isna(rep_date):
+                    if abs((parsed_date - rep_date).days) > 21:
+                        continue
+                res = dict(repaired)
+                rep_comment = str(res.get("_comment", "Completed"))
+                is_partial = rep_comment == "Retired" or (int(res.get("Wsets") or 0) < target_sets and rep_comment != "Retired")
+                return res, is_partial, complete_set_count(res)
 
     return score_frame, partial_score, complete_sets
 
@@ -592,7 +611,12 @@ def download_valuebetennis_fallback(year: int, destination: Path, tour: str = "a
         lrank = score_frame.pop("_lrank", None)
         wpts = score_frame.pop("_wpts", None)
         lpts = score_frame.pop("_lpts", None)
-        comment = score_frame.pop("_comment", "Retired" if partial_score else "Completed")
+        target_sets = 3 if best_of >= 5 else 2
+        w_sets = int(score_frame.get("Wsets") or 0)
+        if w_sets >= target_sets:
+            partial_score = False
+        default_comment = "Completed" if w_sets >= target_sets else ("Retired" if partial_score else "Completed")
+        comment = score_frame.pop("_comment", default_comment)
         score_frame.pop("_best_of", None)
 
         # Résolution des classements et points si absents de la source Sackmann
