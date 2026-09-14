@@ -187,6 +187,70 @@ def test_results_patch_replaces_rows_even_when_the_source_winner_is_wrong(tmp_pa
     assert kept.iloc[0]["Comment"] == "Retired"
 
 
+def test_results_patch_normalises_grand_slam_tournament_aliases(tmp_path, monkeypatch) -> None:
+    stale = _match("Grand Slam", "Sinner J.", "Zverev A.")
+    stale.update({
+        "ATP": 540,
+        "Tournament": "Wimbledon - London",
+        "Date": pd.Timestamp("2026-07-12"),
+        "Round": "The Final",
+        "Best of": 5,
+        "W1": 6,
+        "L1": 7,
+        "W2": 7,
+        "L2": 6,
+    })
+    pd.DataFrame([stale]).to_parquet(tmp_path / "seasons_atp.parquet")
+
+    fixed = stale.copy()
+    fixed.update({
+        "Tournament": "Wimbledon",
+        "W3": 6,
+        "L3": 3,
+        "W4": 6,
+        "L4": 4,
+    })
+    pd.DataFrame([fixed]).to_csv(tmp_path / "results_patch.csv", index=False)
+    monkeypatch.setattr("src.pipeline.DATA", tmp_path)
+
+    kept = load_matches("atp")
+
+    assert len(kept) == 1
+    assert kept.iloc[0]["Tournament"] == "Wimbledon"
+    assert kept.iloc[0]["W4"] == 6
+
+
+def test_results_patch_normalises_common_player_aliases(tmp_path, monkeypatch) -> None:
+    stale = _match("Grand Slam", "Zverev A.", "Fritz T.H.")
+    stale.update({
+        "ATP": 540,
+        "Tournament": "Wimbledon - London",
+        "Date": pd.Timestamp("2026-07-08"),
+        "Round": "Quarterfinals",
+        "Best of": 5,
+        "W1": 6,
+        "L1": 4,
+        "W2": 6,
+        "L2": 4,
+        "W3": 6,
+        "L3": 2,
+    })
+    pd.DataFrame([stale]).to_parquet(tmp_path / "seasons_atp.parquet")
+
+    fixed = stale.copy()
+    fixed.update({
+        "Tournament": "Wimbledon",
+        "Loser": "Fritz T.",
+    })
+    pd.DataFrame([fixed]).to_csv(tmp_path / "results_patch.csv", index=False)
+    monkeypatch.setattr("src.pipeline.DATA", tmp_path)
+
+    kept = load_matches("atp")
+
+    assert len(kept) == 1
+    assert kept.iloc[0]["Loser"] == "Fritz T."
+
+
 def test_wta_results_patch_is_loaded_after_cached_source_lag(tmp_path, monkeypatch) -> None:
     base = _match("Grand Slam", "Gauff C.", "Andreeva M.")
     base.update({

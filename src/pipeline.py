@@ -125,24 +125,53 @@ def _rank_feature_value(
     return _finite_or_nan(fallback_elo_ranks.get(player))
 
 
+def _normalise_patch_tournament(value) -> str:
+    name = str(value or "").strip().lower()
+    aliases = {
+        "wimbledon - london": "wimbledon",
+        "wimbledon": "wimbledon",
+        "u.s. open - new york": "us open",
+        "us open - new york": "us open",
+        "us open": "us open",
+        "french open - paris": "french open",
+        "roland garros": "french open",
+        "australian open - melbourne": "australian open",
+    }
+    return aliases.get(name, name)
+
+
+def _normalise_patch_player(value) -> str:
+    name = str(value or "").strip()
+    key = name.lower()
+    aliases = {
+        "aliassime f.a.": "auger-aliassime f.",
+        "auger-aliassime f.": "auger-aliassime f.",
+        "fritz t.h.": "fritz t.",
+        "fritz t.": "fritz t.",
+        "zandschulp b.v.d.": "van de zandschulp b.",
+        "van de zandschulp b.": "van de zandschulp b.",
+    }
+    return aliases.get(key, key)
+
+
 def _patch_key(row) -> tuple:
     return (
         pd.Timestamp(row["Date"]).year,
-        str(row.get("Tournament") or "").strip().lower(),
+        _normalise_patch_tournament(row.get("Tournament")),
         str(row.get("Round") or "").strip().lower(),
-        str(row.get("Winner") or "").strip(),
-        str(row.get("Loser") or "").strip(),
+        _normalise_patch_player(row.get("Winner")),
+        _normalise_patch_player(row.get("Loser")),
     )
 
 
 def _patch_pair_key(row) -> tuple:
     players = tuple(sorted((
-        str(row.get("Winner") or "").strip(),
-        str(row.get("Loser") or "").strip(),
+        _normalise_patch_player(row.get("Winner")),
+        _normalise_patch_player(row.get("Loser")),
     )))
     return (
         pd.Timestamp(row["Date"]).year,
-        str(row.get("Tournament") or "").strip().lower(),
+        _normalise_patch_tournament(row.get("Tournament")),
         str(row.get("Round") or "").strip().lower(),
         players,
     )
