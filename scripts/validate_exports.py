@@ -124,6 +124,9 @@ def validate_predictions(data: dict) -> None:
             _assert(qf >= 4, f"Missing quarterfinals before final for {tournament}")
             required_semifinals = 2 if "U.S. Open" in tournament else 1
             _assert(sf >= required_semifinals, f"Missing semifinals before final for {tournament}")
+            for match in matches:
+                if match.get("round") in {"The Final", "Final"}:
+                    _assert(not match.get("score_partial"), f"Partial Grand Slam final score for {tournament}")
 
 
 def validate_history(data: dict) -> None:
