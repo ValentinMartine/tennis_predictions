@@ -20,6 +20,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from src.elo import SURFACES  # noqa: E402
 from src.modeling import calibration_bins, probability_metrics, yearly_metrics  # noqa: E402
 from scripts.download_data import known_surnames, short_name_from_full  # noqa: E402
+from src.rankings import get_rankings_lookup  # noqa: E402
 from src.pipeline import (  # noqa: E402
     FEATURES, build_features, load_matches, market_prob, upcoming_features,
 )
@@ -544,6 +545,7 @@ def main(argv: list[str] | None = None) -> int:
     # classement Elo des joueurs actifs (>= 1 match sur 18 mois pour couvrir le top 300)
     elo, recent = state["elo"], state["recent"]
     last_dates, rank, pts = state["last_dates"], state["rank"], state["pts"]
+    rl = get_rankings_lookup(tour)
     now = allm["Date"].max()
     players = []
     for p, r in elo.rating.items():
@@ -558,13 +560,16 @@ def main(argv: list[str] | None = None) -> int:
                 streak += 1 if v else -1
             else:
                 break
+        lrnk, lpts = rl.get_latest_rank_points(p)
+        final_rank = lrnk if (lrnk is not None and not math.isnan(lrnk)) else rank.get(p)
+        final_pts = lpts if (lpts is not None and not math.isnan(lpts)) else pts.get(p)
         players.append({
             "player": p, "elo": round(r, 1),
             "hard": round(elo.surf["Hard"][p], 1),
             "clay": round(elo.surf["Clay"][p], 1),
             "grass": round(elo.surf["Grass"][p], 1),
-            "rank": _opt_int(rank.get(p)),
-            "pts": _opt_int(pts.get(p)),
+            "rank": _opt_int(final_rank),
+            "pts": _opt_int(final_pts),
             "form10": f"{sum(d10)}-{len(d10) - sum(d10)}",
             "streak": streak,
             "matches": elo.count[p],
