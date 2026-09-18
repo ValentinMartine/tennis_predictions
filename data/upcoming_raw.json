@@ -1,6 +1,35 @@
 {
- "fetched_at": "2026-09-17T11:38:08+00:00",
+ "fetched_at": "2026-09-18T11:08:31+00:00",
  "source": "https://www.valuebetennis.com/matchs-a-venir.htm",
  "error": null,
- "matches": []
+ "matches": [
+  {
+   "date": "2026-09-18",
+   "time": "16:00",
+   "tournament_id": 16951,
+   "tournament": "Szczecin Challenger",
+   "surface": "Clay",
+   "round": "Quarterfinals",
+   "player1": "Tom Gentzsch",
+   "player2": "Luka Mikrut",
+   "rank1": 166,
+   "rank2": 239,
+   "odds1": 1.82,
+   "odds2": 2.07
+  },
+  {
+   "date": "2026-09-18",
+   "time": "18:00",
+   "tournament_id": 16951,
+   "tournament": "Szczecin Challenger",
+   "surface": "Clay",
+   "round": "Quarterfinals",
+   "player1": "Nikolas Sanchez-Izquierdo",
+   "player2": "Zdenek Kolar",
+   "rank1": 233,
+   "rank2": 173,
+   "odds1": 1.61,
+   "odds2": 2.42
+  }
+ ]
 }
