@@ -281,8 +281,13 @@ def build_upcoming(tour: str, allm, state, model, blend_w, calibrator=None, mark
     # l'identifiant de tournoi tranche : les tableaux masculin et féminin d'un même
     # Grand Chelem portent le même nom mais deux identifiants (16866 et 16865 pour
     # l'US Open 2026). Conséquence assumée : un tournoi qui n'a pas encore produit de
-    # match terminé cette saison n'est pas encore reconnu.
+    # match terminé cette saison n'est pas encore reconnu : c'est le cas d'un tournoi en cours
+    # (Pékin et Tokyo le 30/09/2026). Il est alors reconnu par son nom, s'il a été joué par ce
+    # circuit ces deux dernières saisons, et par ses deux joueurs, connus du circuit : le
+    # tableau féminin du même nom et les Challenger restent écartés.
     known_ids = {_id_key(x) for x in season["ATP"].dropna().unique()}
+    editions = _editions_recentes(allm)
+    joueurs_connus = _joueurs_recents(allm)
     surnames = known_surnames(tour=tour)
     today = datetime.now(timezone.utc).date().isoformat()
 
@@ -290,14 +295,17 @@ def build_upcoming(tour: str, allm, state, model, blend_w, calibrator=None, mark
     for match in raw.get("matches", []):
         if (match.get("date") or "") < today:
             continue
-        if _id_key(match.get("tournament_id")) not in known_ids:
-            continue
         p1 = short_name_from_full(match["player1"], surnames)
         p2 = short_name_from_full(match["player2"], surnames)
         if p1 == p2:
             continue
-        best_of = 5 if (tour == "atp" and _is_slam(season, match)) else 3
-        series = _series_for_tournament(season, match)
+        if _id_key(match.get("tournament_id")) in known_ids:
+            series = _series_for_tournament(season, match)
+        else:
+            series = editions.get(_nom_tournoi(match.get("tournament")))
+            if series is None or p1 not in joueurs_connus or p2 not in joueurs_connus:
+                continue
+        best_of = 5 if (tour == "atp" and series == "Grand Slam") else 3
         match_date = pd.to_datetime(match["date"], errors="coerce")
         if pd.isna(match_date):
             match_date = state["last_date"]
@@ -348,9 +356,24 @@ def _id_key(value) -> str:
     return text[:-2] if text.endswith(".0") else text
 
 
-def _is_slam(season, match) -> bool:
-    same = season[season["ATP"].map(_id_key) == _id_key(match.get("tournament_id"))]
-    return bool(len(same)) and str(same["Series"].iloc[0]) == "Grand Slam"
+def _nom_tournoi(nom) -> str:
+    """« China Open - Beijing » et « China Open » désignent le même tournoi selon la source."""
+    return str(nom or "").split(" - ")[0].strip().lower()
+
+
+def _editions_recentes(allm, saisons: int = 2) -> dict[str, str]:
+    """Série de la dernière édition de chaque tournoi joué par le circuit ces dernières saisons."""
+    if "Tournament" not in allm or allm.empty:
+        return {}
+    recent = allm[allm["Date"].dt.year >= allm["Date"].max().year - saisons].sort_values("Date")
+    return {_nom_tournoi(t): str(s) for t, s in zip(recent["Tournament"], recent["Series"])}
+
+
+def _joueurs_recents(allm, saisons: int = 2) -> set[str]:
+    if "Winner" not in allm or allm.empty:
+        return set()
+    recent = allm[allm["Date"].dt.year >= allm["Date"].max().year - saisons]
+    return set(recent["Winner"].astype(str).str.strip()) | set(recent["Loser"].astype(str).str.strip())
 
 
 def _series_for_tournament(season, match) -> str | None:

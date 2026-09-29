@@ -432,6 +432,48 @@ def test_upcoming_keeps_only_the_tour_own_tournament_ids(tmp_path, monkeypatch) 
     assert upcoming[0]["series"] == "Grand Slam"
 
 
+
+def test_upcoming_recognises_a_tournament_in_progress_by_its_previous_edition(tmp_path, monkeypatch) -> None:
+    """Pékin et Tokyo en cours le 30/09/2026 : aucun match terminé en base, liste à venir vide.
+
+    Un tournoi inconnu par son identifiant est gardé si le circuit l'a joué ces deux dernières
+    saisons sous ce nom et si les deux joueurs sont connus du circuit : le tableau féminin du
+    même nom et les Challenger restent écartés.
+    """
+    import json
+
+    from src import export
+
+    historique = pd.DataFrame({
+        "ATP": [49, 17027], "Tournament": ["China Open", "Chengdu Open - Chengdu"],
+        "Series": ["ATP500", "ATP"], "Date": [pd.Timestamp("2025-09-30"), pd.Timestamp("2026-09-28")],
+        "Winner": ["Sinner J.", "Hurkacz H."], "Loser": ["Alcaraz C.", "Fokina A.D."],
+    })
+    raw = {"matches": [
+        {"date": "2999-01-01", "time": "10:00", "tournament_id": 17040, "tournament": "China Open - Beijing",
+         "surface": "Hard", "round": "2nd Round", "player1": "Jannik Sinner", "player2": "Carlos Alcaraz"},
+        {"date": "2999-01-01", "time": "11:00", "tournament_id": 17041, "tournament": "China Open - Beijing",
+         "surface": "Hard", "round": "2nd Round", "player1": "Aryna Sabalenka", "player2": "Coco Gauff"},
+        {"date": "2999-01-01", "time": "12:00", "tournament_id": 17036, "tournament": "Bari Challenger",
+         "surface": "Clay", "round": "1st Round", "player1": "Jannik Sinner", "player2": "Carlos Alcaraz"},
+    ]}
+    target = tmp_path / "upcoming_raw.json"
+    target.write_text(json.dumps(raw), encoding="utf-8")
+    monkeypatch.setattr(export, "UPCOMING_RAW", target)
+
+    gardes = []
+    monkeypatch.setattr(export, "upcoming_features",
+                        lambda state, p1, p2, *a, **k: gardes.append((p1, p2, a[3])) or {f: 0.0 for f in export.FEATURES})
+
+    class _Modele:
+        def predict_proba(self, frame):
+            return np.column_stack([np.full(len(frame), 0.4), np.full(len(frame), 0.6)])
+
+    upcoming = export.build_upcoming("atp", historique, {"last_date": pd.Timestamp("2026-09-28")}, _Modele(), 1.0)
+
+    assert gardes == [("Sinner J.", "Alcaraz C.", "ATP500")]
+    assert upcoming[0]["series"] == "ATP500"
+
 def test_tournament_ids_compare_across_pandas_float_coercion() -> None:
     from src.export import _id_key
 
