@@ -66,12 +66,15 @@ ROUND_ORDER = {
     "The Final": 700,
     "Final": 700,
     "Round Robin": 50,
+    # Libellé de Valuebetennis pour une phase de groupes (Laver Cup, 26-27/09/2026).
+    "poules": 50,
 }
+_ROUND_ORDER_CASSE = {nom.lower(): ordre for nom, ordre in ROUND_ORDER.items()}
 
 
 def round_order(round_name) -> int:
     """Ordre sportif du tableau, indépendant de l'ordre alphabétique ou de la date source."""
-    return ROUND_ORDER.get(str(round_name or "").strip(), 0)
+    return _ROUND_ORDER_CASSE.get(str(round_name or "").strip().lower(), 0)
 
 
 def _opt_int(value) -> int | None:

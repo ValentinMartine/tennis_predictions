@@ -44,15 +44,16 @@ ROUND_ORDER = {
     "Quarterfinals": 500,
     "Semifinals": 600,
     "The Final": 700, "Final": 700,
-    "Round Robin": 50,
+    "Round Robin": 50, "poules": 50,
 }
+_ROUND_ORDER_CASSE = {nom.lower(): ordre for nom, ordre in ROUND_ORDER.items()}
 
 
 def _round_order(match: dict) -> int:
     value = match.get("round_order")
     if value is not None:
         return int(value)
-    return ROUND_ORDER.get(str(match.get("round") or "").strip(), 0)
+    return _ROUND_ORDER_CASSE.get(str(match.get("round") or "").strip().lower(), 0)
 
 
 def validate_predictions(data: dict) -> None:
