@@ -53,6 +53,16 @@ Les fichiers WTA portent le suffixe `_wta` ; ceux de l'ATP gardent leur nom d'or
   local (tennis-data en cache) et celui de la CI peuvent donc différer ; comparer `data/source_status.json`
   avant de conclure à une régression de modèle.
 
+## Signaux d'actualité (Nimble, depuis le 01/10/2026)
+- `scripts/signaux_actualite.py`, **local uniquement** (Ollama absent de la CI) : titres Google News
+  des 7 derniers jours pour chaque joueur des matchs à venir, jugés par `nimble:9b-q4_K_M` via
+  l'API System One (« blessé, malade, diminué, de retour de blessure ou incertain ? »).
+- Sorties dans `data/actualite/` : `signaux.json` (lu par l'export, ignoré au-delà de 3 jours),
+  `titres.jsonl` (archive datée) et `a_etiqueter.csv` (colonne `etiquette` à remplir oui/non).
+- Le signal est **affiché** (`news1`, `news2`, badge sur le site dès p >= 0,5), **jamais une variable
+  du modèle** : il n'y entrera qu'après calibration sur les étiquettes et gain de log-loss sur un test
+  postérieur à la collecte. Pas d'historique antérieur au 01/10/2026 : pas de backtest possible avant.
+
 ## État
 | Circuit | Matchs | Test 2024+ | Blend | Elo seul | Marché |
 | --- | --- | --- | --- | --- | --- |

@@ -8,7 +8,7 @@ from __future__ import annotations
 import json
 import math
 import sys
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import joblib
@@ -28,6 +28,9 @@ from src.sackmann_stats import aggregate_player_stats, load_match_stats  # noqa:
 
 ROOT = Path(__file__).resolve().parents[1]
 UPCOMING_RAW = ROOT / "data" / "upcoming_raw.json"
+SIGNAUX_ACTUALITE = ROOT / "data" / "actualite" / "signaux.json"
+SEUIL_ALERTE_ACTUALITE = 0.5
+AGE_MAX_SIGNAUX = timedelta(days=3)
 
 
 def _suffix(tour: str) -> str:
@@ -274,6 +277,21 @@ def _enrich_with_sackmann_stats(base_stats: list[dict], allm) -> list[dict]:
     return enriched
 
 
+def charger_signaux(chemin: Path, maintenant: datetime) -> dict:
+    """Signaux produits en local par scripts/signaux_actualite.py ; périmés au-delà de 3 jours."""
+    if not chemin.exists():
+        return {}
+    contenu = json.loads(chemin.read_text(encoding="utf-8"))
+    if maintenant - datetime.fromisoformat(contenu["generated_at"]) > AGE_MAX_SIGNAUX:
+        return {}
+    return contenu["joueurs"]
+
+
+def alerte_actualite(signaux: dict, joueur: str) -> dict | None:
+    signal = signaux.get(joueur)
+    return signal if signal and signal["p"] >= SEUIL_ALERTE_ACTUALITE else None
+
+
 def build_upcoming(tour: str, allm, state, model, blend_w, calibrator=None, market_weight: float = 0.0) -> list[dict]:
     """Matchs à venir du circuit, prédits avec l'état arrêté au dernier match connu."""
     if not UPCOMING_RAW.exists():
@@ -293,6 +311,7 @@ def build_upcoming(tour: str, allm, state, model, blend_w, calibrator=None, mark
     joueurs_connus = _joueurs_recents(allm)
     surnames = known_surnames(tour=tour)
     today = datetime.now(timezone.utc).date().isoformat()
+    signaux = charger_signaux(SIGNAUX_ACTUALITE, datetime.now(timezone.utc))
 
     rows, metas = [], []
     for match in raw.get("matches", []):
@@ -342,6 +361,8 @@ def build_upcoming(tour: str, allm, state, model, blend_w, calibrator=None, mark
             "odds1": match.get("odds1"), "odds2": match.get("odds2"),
             **prediction,
             "market_p1_win": round(market, 3) if market is not None else None,
+            "news1": alerte_actualite(signaux, match["player1"]),
+            "news2": alerte_actualite(signaux, match["player2"]),
             "rank_features_available": bool(feature_row["rank_both_known"] >= 1.0),
             "probability_warning": (
                 "missing_rank_features" if feature_row["rank_both_known"] < 1.0
