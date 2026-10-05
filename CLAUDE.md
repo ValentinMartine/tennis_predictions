@@ -54,7 +54,8 @@ Les fichiers WTA portent le suffixe `_wta` ; ceux de l'ATP gardent leur nom d'or
   avant de conclure à une régression de modèle.
 
 ## Signaux d'actualité (Nimble, depuis le 01/10/2026)
-- `scripts/signaux_actualite.py`, **local uniquement** (Ollama absent de la CI) : titres Google News
+- `scripts/signaux_actualite.py`, **local uniquement** (Ollama absent de la CI), lancé chaque nuit par
+  `football-predictions/automation/daily_update.py` avant l'export, qui pousse `data/` : titres Google News
   des 7 derniers jours pour chaque joueur des matchs à venir, jugés par `nimble:9b-q4_K_M` via
   l'API System One (« blessé, malade, diminué, de retour de blessure ou incertain ? »).
 - Sorties dans `data/actualite/` : `signaux.json` (lu par l'export, ignoré au-delà de 3 jours),
