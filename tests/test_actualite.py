@@ -102,3 +102,32 @@ def test_l_etiquetage_conserve_les_etiquettes_saisies(tmp_path):
     mettre_a_jour_etiquetage(archive, fichier)
     with fichier.open(encoding="utf-8", newline="") as f:
         assert [r["etiquette"] for r in csv.DictReader(f)] == ["oui", ""]
+
+
+def test_l_etiqueteur_est_conserve(tmp_path):
+    import csv
+    import json
+
+    from scripts.signaux_actualite import mettre_a_jour_etiquetage
+
+    archive, fichier = tmp_path / "titres.jsonl", tmp_path / "a_etiqueter.csv"
+    archive.write_text(json.dumps({"date": "d", "joueur": "A", "titre": "t", "source": "s", "lien": "l", "p": 0.9}) + "\n",
+                       encoding="utf-8")
+    mettre_a_jour_etiquetage(archive, fichier)
+    texte = fichier.read_text(encoding="utf-8").replace("l,0.9,,", "l,0.9,oui,claude")
+    fichier.write_text(texte, encoding="utf-8")
+    mettre_a_jour_etiquetage(archive, fichier)
+    with fichier.open(encoding="utf-8", newline="") as f:
+        assert [(r["etiquette"], r["etiqueteur"]) for r in csv.DictReader(f)] == [("oui", "claude")]
+
+
+def test_calibration_stratifiee():
+    from scripts.calibration_actualite import calibrer
+
+    lignes = ([{"p": 0.9, "etiquette": "oui", "strate": "haute"}] * 9 + [{"p": 0.4, "etiquette": "non", "strate": "haute"}]
+              + [{"p": 0.01, "etiquette": "non", "strate": "basse"}] * 100)
+    bilan = calibrer(lignes, poids={"haute": 1.0, "basse": 10.0}, seuil=0.5)
+    assert bilan["precision"] == 1.0
+    assert bilan["faux_negatifs_observes"] == 0
+    assert bilan["n_etiquetes"] == 110
+    assert 0 < bilan["brier_pondere"] < 0.02

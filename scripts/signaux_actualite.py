@@ -21,7 +21,7 @@ from scripts.download_data import known_surnames, short_name_from_full  # noqa: 
 from src.actualite import MODELE, archiver, juger_ollama, signal_joueur, telecharger_rss  # noqa: E402
 
 DOSSIER = ROOT / "data" / "actualite"
-COLONNES = ["date", "joueur", "titre", "source", "lien", "p", "etiquette"]
+COLONNES = ["date", "joueur", "titre", "source", "lien", "p", "etiquette", "etiqueteur"]
 
 
 def joueurs_a_suivre() -> list[str]:
@@ -45,13 +45,14 @@ def mettre_a_jour_etiquetage(archive: Path, csv_path: Path) -> None:
     etiquettes = {}
     if csv_path.exists():
         with csv_path.open(encoding="utf-8", newline="") as f:
-            etiquettes = {(r["joueur"], r["lien"]): r["etiquette"] for r in csv.DictReader(f)}
+            etiquettes = {(r["joueur"], r["lien"]): (r["etiquette"], r.get("etiqueteur", "")) for r in csv.DictReader(f)}
     lignes = [json.loads(x) for x in archive.read_text(encoding="utf-8").splitlines()]
     with csv_path.open("w", encoding="utf-8", newline="") as f:
         w = csv.DictWriter(f, fieldnames=COLONNES, extrasaction="ignore")
         w.writeheader()
         for lig in lignes:
-            w.writerow({**lig, "etiquette": etiquettes.get((lig["joueur"], lig["lien"]), "")})
+            etiquette, etiqueteur = etiquettes.get((lig["joueur"], lig["lien"]), ("", ""))
+            w.writerow({**lig, "etiquette": etiquette, "etiqueteur": etiqueteur})
 
 
 def main() -> int:

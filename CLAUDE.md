@@ -59,7 +59,11 @@ Les fichiers WTA portent le suffixe `_wta` ; ceux de l'ATP gardent leur nom d'or
   des 7 derniers jours pour chaque joueur des matchs à venir, jugés par `nimble:9b-q4_K_M` via
   l'API System One (« blessé, malade, diminué, de retour de blessure ou incertain ? »).
 - Sorties dans `data/actualite/` : `signaux.json` (lu par l'export, ignoré au-delà de 3 jours),
-  `titres.jsonl` (archive datée) et `a_etiqueter.csv` (colonne `etiquette` à remplir oui/non).
+  `titres.jsonl` (archive datée) et `a_etiqueter.csv` (colonnes `etiquette` oui/non et `etiqueteur`).
+- Calibration du 05/10/2026 (`scripts/calibration_actualite.py`), 174 titres étiquetés par Claude
+  (à valider) : tous les titres à p >= 0,2 et 160 tirés au hasard en dessous. Au seuil 0,5,
+  9 alertes justes sur 9 ; un oubli à 0,21 (Musetti « corps de verre ») ; aucun « oui » dans
+  les 160 titres bas, soit moins de 2 % d'oublis environ. Brier pondéré 0,0015.
 - Le signal est **affiché** (`news1`, `news2`, badge sur le site dès p >= 0,5), **jamais une variable
   du modèle** : il n'y entrera qu'après calibration sur les étiquettes et gain de log-loss sur un test
   postérieur à la collecte. Pas d'historique antérieur au 01/10/2026 : pas de backtest possible avant.
