@@ -146,11 +146,11 @@ def _prediction_fields(
     return {
         "p1_win": round(float(primary_p1), 3),
         "predicted_player": primary_player,
-        "predicted_prob": round(float(primary_p1 if primary_player == p1 else 1 - primary_p1), 3),
+        "predicted_prob": round(max(primary_p1, 1 - primary_p1), 3),
         "prediction_source": "independent_calibrated",
         "model_p1_win": round(float(model_p1), 3),
         "model_predicted_player": model_player,
-        "model_predicted_prob": round(float(model_p1 if model_player == p1 else 1 - model_p1), 3),
+        "model_predicted_prob": round(float(max(model_p1, 1 - model_p1)), 3),
         "market_predicted_player": market_player,
         "market_calibrated_p1_win": round(float(market_adjusted_p1), 3) if market_adjusted_p1 is not None else None,
         "market_model_gap": round(abs(float(market_p1) - float(model_p1)), 3) if _valid_prob(market_p1) else None,

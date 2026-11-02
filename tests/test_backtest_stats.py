@@ -32,3 +32,10 @@ def test_wilson_and_roi_confidence_intervals_logic():
 
     assert roi < 0
     assert p_val > 0.5  # Impossible de rejeter H0: ROI <= 0
+
+
+def test_probabilite_predite_homonymes():
+    # Wang Xinyu contre Wang Xiyu : tennis-data écrit « Wang X. » des deux côtés (Wuhan, 12/10/2026)
+    champs = _prediction_fields("Wang X.", "Wang X.", 0.498, 0.516, 0.0)
+    assert champs["predicted_prob"] == 0.502
+    assert champs["model_predicted_prob"] == 0.502
