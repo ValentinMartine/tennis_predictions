@@ -1,5 +1,5 @@
 {
-  "checked_at": "2026-11-07T21:23:53+00:00",
+  "checked_at": "2026-11-08T13:15:44+00:00",
   "tour": "atp",
   "primary_source": "tennis-data.co.uk",
   "fresh_csv_fallback": "Valuebetennis",
@@ -203,7 +203,7 @@
       "ok": true,
       "url": "https://www.valuebetennis.com/datasets/valuebetennis-matchs-2026.csv",
       "latest_match_date": "2026-11-07",
-      "rows": 2274,
+      "rows": 2276,
       "primary_error": "HTTP Error 403: Forbidden",
       "error": null
     }
