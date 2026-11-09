@@ -1,135 +1,167 @@
 {
- "generated_at": "2026-10-05T21:27:51.786949+00:00",
+ "generated_at": "2026-11-09T21:32:54.675673+00:00",
  "modele": "nimble:9b-q4_K_M",
  "fenetre_jours": 7,
  "joueurs": {
-  "Alina Charaeva": {
-   "p": 0.019,
-   "titre": "Tournament Stats - Tennis Tonic - News, Predictions, H2H, Live Scores, stats - Tennis Tonic",
-   "date": "2026-10-05T09:45:57+00:00",
+  "Adrian Mannarino": {
+   "p": 0.013,
+   "titre": "STOCKHOLM DRAW. Adrian Mannarino’s prediction with Shevchenko next. H2H and rankings - Tennis Tonic",
+   "date": "2026-11-09T18:23:13+00:00",
    "source": "Tennis Tonic",
-   "lien": "https://news.google.com/rss/articles/CBMimgFBVV95cUxOLW42NmZXQ2p5SzE3eWpoZjdhMTgzTkZ4R2lZb3BKU2ZfMWJ6Wkl0cHlSWUIzUDB5SWdMMENUdHRiR1JIdXhfLWdiQXhxa3hXcWJZeDFUeEVGUnVwR01SajdNWUUtQXBXMHIwUmN2ajlMSTVQVDNXbEE2NUM4c25wUEdFNlg5TmJaUWVOd2hTSEtITF9wRjBzb3dR?oc=5",
+   "lien": "https://news.google.com/rss/articles/CBMixAFBVV95cUxOMkZsU3B5TXJkR05QaS00QmhZNjNrdlgyemgtRmp2VnR4T0Jvb3N0emI2SENob0FuS1cwM0VPSUg0OEU1dmtaTFU4djhyNktBYUtlZmk2SzAtSmllaXZfRl9XdEV2NlEwUXY4YW5QTnQzUlVvaGF2RHpvYUhwZ05JZDltMC1RRXhxS0hVdDI3YWY2NVpEWU9HM2NZM09jNHRodXdBVnRLT0VHTnFSSmlmNm1feVZKLV81bGkzNXdXaHFVQXRD?oc=5",
    "n_titres": 5
   },
-  "Ann Li": {
-   "p": 0.018,
-   "titre": "WTA Beijing Day 6 Predictions Including Coco Gauff vs Sun Xinran - Last Word On Sports",
-   "date": "2026-10-04T21:47:52+00:00",
-   "source": "Last Word On Sports",
-   "lien": "https://news.google.com/rss/articles/CBMikAFBVV95cUxOaUNLNnNmOERzVEQ1VFEyMzRvdVBnb2ZISjI1NllnNnBjZUJoTGN3NFBIWVlZYk1SN1N4Q2dLN0NHaERXcUNzUE5nV3hqNzVLXzNjNGNBQ0pweTRoUU5BVlhrWVRlM0F6WktkTkNfckt1QUpjVUNoMHpQTW55ci1nUnZJSGctZGluUks5WW5UZGk?oc=5",
+  "Alex Michelsen": {
+   "p": 0.017,
+   "titre": "STOCKHOLM DRAW. Lorenzo Sonego’s prediction with Halys next. H2H and rankings - Tennis Tonic",
+   "date": "2026-11-09T18:42:19+00:00",
+   "source": "Tennis Tonic",
+   "lien": "https://news.google.com/rss/articles/CBMiuwFBVV95cUxQZmItNjNiTHRsejhsaVo4SWdEN19vcHpQOTJvX3Q1ZzhnY1dlVFppMk5seXgxQVhTMkRmMnRDY2gyT2FMcXNaYTRsR0dEQnkzUHBzdk9ydEFSOEJsLUxGeGF4R3hTNTQ5YUR2WmVVWHNZZ2c1YnNTNFR5MFdpb2dSdl8tSFIwSHcycDlKV0pLVEhoaXZZSE4zNVFXemVzVGQ2dEUyX3c4OU5ROElueWNxM1JxUkRiS1NmeWdR?oc=5",
+   "n_titres": 5
+  },
+  "Alexander Shevchenko": {
+   "p": 0.014,
+   "titre": "STOCKHOLM DRAW. Alexander Shevchenko’s prediction with Mannarino next. H2H and rankings - Tennis Tonic",
+   "date": "2026-11-09T18:42:22+00:00",
+   "source": "Tennis Tonic",
+   "lien": "https://news.google.com/rss/articles/CBMiyAFBVV95cUxQWlhUeVU3enl1ZTlSV1pOUDJqNVAyOTFuVzQxVGxhR1pTNzNabU5DQUlqRjJCc3VYUkQ2bDdEZk02ejhiLTV1blZMYXBmamJORmNPRDNOWFh3amVVTTVyb1V2ckw4cmhqU3ZFdzZtLUIwRUtxTXZkLXRMSmd0S21ueGYxR1FUZXNBSkQ0ZHY1Y1J3R1RvM0JUWkFSV1IxeWwtcWtyaUZoUE02cTdNZnNmMWVyTVl2MlphaUlRQWZnUjNNMzJ4d0RGaw?oc=5",
+   "n_titres": 5
+  },
+  "Arthur Rinderknech": {
+   "p": 0.015,
+   "titre": "H2H, prediction of Arthur Rinderknech vs Miomir Kecmanovic in Stockholm with odds, preview, pick | 10th November 2026 - Tennis Tonic",
+   "date": "2026-11-09T15:43:43+00:00",
+   "source": "Tennis Tonic",
+   "lien": "https://news.google.com/rss/articles/CBMi7gFBVV95cUxQcEJfbFNyVjN3ZjlfbXpIdHNmdUNGQnQ2OU5kM3RwTDFLTzJmTmM4S0I3RExvUXJ4eWpFZi1lMEJqbkJtNG9pazZrSmtOcV9vVi1qNW40M0Q5dFRGam9BaGc1YjZrNzF4RmlkczJUY2ZQSnByUDNpdEQzcnVMcXRvSGJIeHBQWnAwZm8zOC1SRUhhT0JrVDV1SEw0dS14ZVgwaVVEYnFROVR4R2h6ejk1OWREMVNERkpiZDQ2a090TXQ3LUx1Tm1OeEVyU3l3UU1PMU5DczRUVnFHMUIzVW5RbHJ1TG5naUFIamdxcmdR?oc=5",
+   "n_titres": 5
+  },
+  "Aryna Sabalenka": {
+   "p": 0.064,
+   "titre": "Sports News, Transfers, Scores | Watch Live Sport - Sky Sports",
+   "date": "2026-11-09T19:55:08+00:00",
+   "source": "Sky Sports",
+   "lien": "https://news.google.com/rss/articles/CBMif0FVX3lxTFBQY0tOWFZ2TjFiLXhEbWxZOU05dWkyVHEyeElMVm10Y29aZlJRWUc5SURrQ1NfT25QeVZ4MUJOLUYzOF9GQ1ZQOE9LdTlMeXlPdTNVcFRwSFdGeXZuaTNJYjRVbFdCU09zbXlPQW1wYWFnMG5reE1OVTdxVGxLNjA?oc=5",
    "n_titres": 5
   },
   "Cori Gauff": {
-   "p": 0.01,
-   "titre": "[UPDATED R3]. Prediction, H2H of Donna Vekic’s draw vs Swiatek, Jovic, Gauff, Svitolina, Andreeva to win the Beijing - Tennis Tonic",
-   "date": "2026-10-04T19:54:11+00:00",
+   "p": 0.011,
+   "titre": "H2H, prediction of Cori Gauff vs Linda Noskova in Indian Wells with odds, preview, pick | 10th November 2026 - Tennis Tonic",
+   "date": "2026-11-09T09:40:32+00:00",
    "source": "Tennis Tonic",
-   "lien": "https://news.google.com/rss/articles/CBMi5wFBVV95cUxPTGhxazZzcU1tSl9qTlhSbU1yOGxHNlNrSjVXTEdwb21lZ1pHMjlDdmdxcXpZTXl5Qk5JS1FoNi1EbDh6YVNFRG1kOTRsdGdjSS1kSEh4LXV4WTM2ckdHYjRFWXhzSXFjMXg2NFJnbnJRYW5leHhvQ0VzOFluRkt5eUFJaFNLZUhpSXczQkNZdkY3VUNEQXZERXdDYnVkNGZLNFYyRUxpbTJtVzlHVURvUXFnMnpzUTlqR0lVZkFEMVNmZS1IbDFXZFhfeUo2ZjFEb2JzVDVUZG5HN0FFZWRud05MV05kZHM?oc=5",
-   "n_titres": 5
-  },
-  "Daria Snigur": {
-   "p": 0.015,
-   "titre": "Daria Snigur vs Mirra Andreeva · Round 4 · WTA Beijing - Tennis.com",
-   "date": "2026-10-05T17:05:47+00:00",
-   "source": "Tennis.com",
-   "lien": "https://news.google.com/rss/articles/CBMilgFBVV95cUxOZWVYVEtJdnBMRnRwemRoeENaeXFhYy1nSWZ3OWxyTWhIVVh5T29FbFlKeXBINzRqc1p2MUhocElnNlJZY09KX3djbXgzOS1WLTZONTIyOEozdlZvQ2QzN1BFYTl5cENHTnNHQ0d0QWhmYkIyRlExSnliUDZ6c3h4MFQ3aGt5TjJnQXI0bkpNbl9UeTBOMkE?oc=5",
-   "n_titres": 5
-  },
-  "Ekaterina Alexandrova": {
-   "p": 0.016,
-   "titre": "[UPDATED R4]. Prediction, H2H of Linda Noskova’s draw vs Alexandrova, Andreeva, Muchova, Gauff to win the Beijing - Tennis Tonic",
-   "date": "2026-10-05T20:43:13+00:00",
-   "source": "Tennis Tonic",
-   "lien": "https://news.google.com/rss/articles/CBMi5AFBVV95cUxQWmh2MmlmdDFJeUljS2tRUU5CVlc3b3BzYmV0b1V6XzlpNW1QMkxMQllDRHRPOTgydjJ2RHFZdExPMkNiR1ExSEpzSHhQc1pJMDJpQWJMb2FRdGNmRVp6R0xpbnBkdC1rSUdjWHl1ZnF2UWpYRTc4c0JvaUk4c2FiaFZ3U2hLd1M3SkZ3SHZUMng0YS12QlE2RWNVZm1XaVREOXBlVDBQQnZBQUdUZTFoYkhrTGFPTzBVYTZLOG9Ob3M5OEluZ1IySUFlYk9XemFIZXYwSklrbWRuRkdSZnJJVkxYeGM?oc=5",
+   "lien": "https://news.google.com/rss/articles/CBMi4gFBVV95cUxQeUx0NzNINU1qR1BMLVBCMDBCeU5zaDAzcG5BM2d3RTUxZ2JVSks1eC1VSzRGTG5FS016N2hkTEVqME1lalRlT3BHdlpCUjUzdlFUZkFfeDZsbi1VU1kybGdzLWxBREJ2bVNGaWpHS09OUFZvcHRibFJqSWZMOXExSzFYVmtPVkpTelZFVnN2QWdxN29hZ3NmU1BuWkZ6NkoyMnhmRmptWU94UUhubUpyaW14STE0S1hoVGswSmlqS2IyZmFPaGViUUt2VEN4Y1poR3M1S2c5dFBoT1JQYTlac253?oc=5",
    "n_titres": 5
   },
   "Elina Svitolina": {
-   "p": 0.014,
-   "titre": "Maria Sakkari vs Elina Svitolina · Round 3 · WTA Beijing - Tennis.com",
-   "date": "2026-10-05T17:05:45+00:00",
-   "source": "Tennis.com",
-   "lien": "https://news.google.com/rss/articles/CBMimAFBVV95cUxOdXBDaW1oYTlDSDFoMS1ZcG5pdExERUg1dE5ZZng4ZlhQWkYyc1pMWXVTa05CcDViZUdGckJmd21ydEp1TWFwaHh2VUJ2ZVd1WlM1NkJvOTk4eWVEMjNVTmxfS0JhaFkycm9tTDFvRXdKeDE4cWFnN1MwQjA4ZjhaSnptSndFLWFzTDNkNnJFWGpUOHdpM1U0Sg?oc=5",
+   "p": 0.437,
+   "titre": "Svitolina returns to WTA Finals to face Russia’s Andreeva: When the match starts - Головне в Україні",
+   "date": "2026-11-09T19:30:00+00:00",
+   "source": "Головне в Україні",
+   "lien": "https://news.google.com/rss/articles/CBMisAFBVV95cUxPdS1iQ0RhUzRaVmVmZUtOUkxnWWxmak5sUzM4OTZpM0h2QUUzNXo4RDJzWXBYbEZYT2FyWUFaRHgxU3d5MUR4VXREOXRXUmltYUhVaGp1OTJRa3Q1NVl1Z2ppY0U2Z1ROV0lGLS0zWjZMckJ5LXpyNjlZWmF5OTg0bERRc1hyTkRkaTU5T2ZYeTN6eWFWVnA2UndSakNPbUVka002V1N0NWxERGhrSEQ4TNIBtgFBVV95cUxOVXRKMW5vVHFSSWs2NzZBX1U2TjYzQ3lQUzhkUnBnbm9ERHhqWmRKUnYtM2NETjdmUTFDeGkxTlRvN2U5X0hhS2M5cmlDNWpwT19DSThLcHVjMm9mX29hN2l5dFZfVXNqVzJ2QkUweWZTaklmN0VMWEtKUVB2UVBvRTdNOElDU0JyR0JTSkMtRE1TZC13TXZoLUgzSWV0N3FOUGF3Uzc5NlBkVEZCbXEySWIwU3JiUQ?oc=5",
    "n_titres": 5
   },
-  "Iga Swiatek": {
+  "Holger Rune": {
+   "p": 0.015,
+   "titre": "November 10, 2026: Zizou Bergs vs Holger Rune Tennis Prediction Market - Robinhood",
+   "date": "2026-11-09T17:25:50+00:00",
+   "source": "Robinhood",
+   "lien": "https://news.google.com/rss/articles/CBMinwFBVV95cUxQaUN3Yl9jbVlCNXRTbUpyM0JENWYyQ192aVFsWmh2LTFGbzNHOHIxQV93SWkzQUlCeVBlQVlldHl6UFczc2V1YlNOUVB1OWV3eUhQNWUtbS1kSXpiREExLTNCNmx1WHByQTlweEtUMEczTFh2ZldZVFlyM2NPelZIU3RjWExTN2JOb1FrRkYwOHpYbWRKcnhJeVFaVnpmdDA?oc=5",
+   "n_titres": 5
+  },
+  "Jessica Pegula": {
    "p": 0.007,
-   "titre": "Swiatek rallies from 6-4, 5-2 down to beat Vekic and reach Beijing last 16 - WTA Tennis",
-   "date": "2026-10-05T16:54:57+00:00",
-   "source": "WTA Tennis",
-   "lien": "https://news.google.com/rss/articles/CBMisgFBVV95cUxPZ3B2NGg0Q0JCalVIN1JtaklTOXlfMWptWGVpSXFVQ3hMUGRiNVlibndUTi1qM3NvNVJ6eVZ0SjJkMFNxSmYzOWlmM2puU1VPZ01lY0k4ZGNmYXg3SlI5UFc0Wk5WZGdSakdacEV0ZzdjU1dxbzJzMWx1bnJCdHhXNEEtT282Qmd6LVRJbXF3RzVrQm55YzFPbGJPbmZVenR0UGpLeFh5QnRiQ3ZLUkFRRUp3?oc=5",
+   "titre": "Jessica Pegula and the seven other American players Coco Gauff has defeated this year - Yahoo Sports",
+   "date": "2026-11-09T20:00:00+00:00",
+   "source": "Yahoo Sports",
+   "lien": "https://news.google.com/rss/articles/CBMijAFBVV95cUxPNDFHRDdjem92eHpKcThWUDJ6T2lubVdyZFZMUnphU2xoRFpvWVI4d21qNVZKYm9WNFdiOTdGTmRfX3RMekI4LWNySmJXS2tIWFZjZUp5WTBKc1poYjFQbXJfaTlMQ21FUXltTjEyMzN6MGpVb01hWWFaV1BMWGl6eUwxM3p3c2ptcWNqcQ?oc=5",
    "n_titres": 5
   },
-  "Iva Jovic": {
-   "p": 0.018,
-   "titre": "Iga Świątek to play Iva Jović for Beijing quarterfinal — Interia Sport - UA.NEWS",
-   "date": "2026-10-05T07:41:08+00:00",
-   "source": "UA.NEWS",
-   "lien": "https://news.google.com/rss/articles/CBMingFBVV95cUxQaEFfYkNTZWp4S21EUTJqb2hqWERZaXJKbFJsckhCQ0IxYXdFQkFGSzBGWmpOaFZBS1NGRy0wZWtuS1FvcDluUUxKSE0zTlhDVFY1LXFBejFnUWYzakd3V0VnYUJkV3dFVzNqRm5Ra1RWRnZzM3FGNFM4YVd5NFZPZGsySnV6UENXWlJKcWI0cldhamJqWkc2MW1xejVHZw?oc=5",
+  "Juan Manuel Cerundolo": {
+   "p": 0.021,
+   "titre": "[UPDATED R2]. Prediction, H2H of Alex Michelsen’s draw vs Manuel Cerundolo, Tabilo, Ruud, Fritz to win the Stockholm - Tennis Tonic",
+   "date": "2026-11-09T18:42:10+00:00",
+   "source": "Tennis Tonic",
+   "lien": "https://news.google.com/rss/articles/CBMi6AFBVV95cUxOZUZGRk5oTXVYUlRvVGp0WlNwSEdkeTVmeXpGRThROGVCWmE0VEtNUDc2MmYwMnBTNHpoV3AzSGhGNW5KbVBmMGJHM3J1RzNmVlhoYi0wQTkzVlJpQ1lpa2tlV1B1SHJRdEJGczg4UnZqSmZETWI0cFJZa2ljdExkNXNuQUl5b28teXk0dkl3UGw5ZkVDaWViQzh5bUhoaHAzczdibXFQY1FaMTY2azNkc2U4bTJpdkUtdWJacGhWd1MwU3AxMlV2U2FvS3FtaDBjT3VXVkJSQzJYQWpNQ0hqc2NzZUk4VThQ?oc=5",
    "n_titres": 5
   },
   "Karolina Muchova": {
-   "p": 0.014,
-   "titre": "[UPDATED R4]. Prediction, H2H of Linda Noskova’s draw vs Alexandrova, Andreeva, Muchova, Gauff to win the Beijing - Tennis Tonic",
-   "date": "2026-10-05T20:43:13+00:00",
+   "p": 0.07,
+   "titre": "Sports News, Transfers, Scores | Watch Live Sport - Sky Sports",
+   "date": "2026-11-09T19:55:08+00:00",
+   "source": "Sky Sports",
+   "lien": "https://news.google.com/rss/articles/CBMif0FVX3lxTFBQY0tOWFZ2TjFiLXhEbWxZOU05dWkyVHEyeElMVm10Y29aZlJRWUc5SURrQ1NfT25QeVZ4MUJOLUYzOF9GQ1ZQOE9LdTlMeXlPdTNVcFRwSFdGeXZuaTNJYjRVbFdCU09zbXlPQW1wYWFnMG5reE1OVTdxVGxLNjA?oc=5",
+   "n_titres": 5
+  },
+  "Leo Borg": {
+   "p": 0.016,
+   "titre": "How to watch Samuel vs. Borg on live streaming in Stockholm on Monday - Tennis Tonic",
+   "date": "2026-11-09T00:50:57+00:00",
    "source": "Tennis Tonic",
-   "lien": "https://news.google.com/rss/articles/CBMi5AFBVV95cUxQWmh2MmlmdDFJeUljS2tRUU5CVlc3b3BzYmV0b1V6XzlpNW1QMkxMQllDRHRPOTgydjJ2RHFZdExPMkNiR1ExSEpzSHhQc1pJMDJpQWJMb2FRdGNmRVp6R0xpbnBkdC1rSUdjWHl1ZnF2UWpYRTc4c0JvaUk4c2FiaFZ3U2hLd1M3SkZ3SHZUMng0YS12QlE2RWNVZm1XaVREOXBlVDBQQnZBQUdUZTFoYkhrTGFPTzBVYTZLOG9Ob3M5OEluZ1IySUFlYk9XemFIZXYwSklrbWRuRkdSZnJJVkxYeGM?oc=5",
+   "lien": "https://news.google.com/rss/articles/CBMiswFBVV95cUxOR0d5SjZ4VTAwTDVTc1laTG14SXcyc3FtWktFVDJVenFTaUctb1plY3IzMkt4djJwSzFQMVZHRHUyYXFxaU1OUHlyX0E1OGl4Y1NmUF82LUZRQkdZNUNCRC1TODNMWGlpRUtfT2R3ZW1FeGxlelJGeU9TcGhvdFpHMm05Rjh6VmVPalhqQ3J0VkhqWGM4cWoxSXVTZTFNMDNmU3VaRHVsbi1VdFFmQTlhamdIOA?oc=5",
    "n_titres": 5
   },
   "Linda Noskova": {
-   "p": 0.017,
-   "titre": "[UPDATED R4]. Prediction, H2H of Mirra Andreeva’s draw vs Snigur, Noskova, Muchova, Gauff to win the Beijing - Tennis Tonic",
-   "date": "2026-10-05T18:54:44+00:00",
+   "p": 0.013,
+   "titre": "WTA Finals Day 3 Predictions Including Coco Gauff vs Linda Noskova - Last Word On Sports",
+   "date": "2026-11-09T16:13:34+00:00",
+   "source": "Last Word On Sports",
+   "lien": "https://news.google.com/rss/articles/CBMimAFBVV95cUxPUkJ5aDB0S1h6MnY2ZDA4T0VNck5ETzB3NS1TcTRWUGY2SU9vTmFiRTNHWEJjdEpSWTNfV3NWUEkyY21xZFp5blhGVS1lMUFGTzNkZm8wOERvR01WOTFxSXlCNEdfbFEzX3ZaSHVxeEJHUkJVampVZUQ0UFFSeWxCa05aSFFoRWh4dXJJc1BWcHUtUElNSjlnRA?oc=5",
+   "n_titres": 5
+  },
+  "Lorenzo Sonego": {
+   "p": 0.012,
+   "titre": "LIVE RANKINGS. Halys’s rankings prior to competing against Sonego in Stockholm - Tennis Tonic",
+   "date": "2026-11-09T16:44:12+00:00",
    "source": "Tennis Tonic",
-   "lien": "https://news.google.com/rss/articles/CBMi3gFBVV95cUxOZmtaaU11aWhJcmxpNHVZdVpqT3FzcjVZbjdtMmFnbmp5Y0w2dkdXaVBaNnBieVQwS2dJcmpfNWp4LUNkdEdVMzZXNmNRLWtyeDE0NTF6NnZnYzQyNmQ2SnhtZFpKVTdPOVBZM1BITlk3N1pVTjVKNGJnX3E1RkI5T2xlYzZNNTQxTF9pclR3WUdsVXJ3a1ZIVFdVQ0dqazU0SDg3WEpVcmNXcU5YSS1UNFVrbzMtcnFTYnpRQVN2ajZPa3c0RG1QeGVlUUNRQ0lKRGhfakloNUZnMUJFbGc?oc=5",
+   "lien": "https://news.google.com/rss/articles/CBMivgFBVV95cUxOeHJaZmJaTTQxaUxjZ1lEQmtKN2ZtTHM3UERwUmNocDFEVTh5THdIdFVoX0htdks2MVVMNjJtSHY2SjRIcUl0djVNYWpyWXdQa1I1amVzVkJjRjRhbXdpNzBQTll3WHBrVV9KWExKdnFONHJ2WnVzZnVjYktIUGIwN3FFTFN0ci1WQXVicmw4Um5RejgtWmxXLTBJVkhaY2phSkQ1UzFTWW5hNEY2T1ZVUzBTMjhoWlFtZXl4U3NB?oc=5",
+   "n_titres": 5
+  },
+  "Marta Kostyuk": {
+   "p": 0.016,
+   "titre": "WTA Finals Day 3 Predictions Including Coco Gauff vs Linda Noskova - Last Word On Sports",
+   "date": "2026-11-09T16:13:34+00:00",
+   "source": "Last Word On Sports",
+   "lien": "https://news.google.com/rss/articles/CBMimAFBVV95cUxPUkJ5aDB0S1h6MnY2ZDA4T0VNck5ETzB3NS1TcTRWUGY2SU9vTmFiRTNHWEJjdEpSWTNfV3NWUEkyY21xZFp5blhGVS1lMUFGTzNkZm8wOERvR01WOTFxSXlCNEdfbFEzX3ZaSHVxeEJHUkJVampVZUQ0UFFSeWxCa05aSFFoRWh4dXJJc1BWcHUtUElNSjlnRA?oc=5",
+   "n_titres": 5
+  },
+  "Miomir Kecmanovic": {
+   "p": 0.014,
+   "titre": "H2H, prediction of Arthur Rinderknech vs Miomir Kecmanovic in Stockholm with odds, preview, pick | 10th November 2026 - Tennis Tonic",
+   "date": "2026-11-09T15:43:43+00:00",
+   "source": "Tennis Tonic",
+   "lien": "https://news.google.com/rss/articles/CBMi7gFBVV95cUxQcEJfbFNyVjN3ZjlfbXpIdHNmdUNGQnQ2OU5kM3RwTDFLTzJmTmM4S0I3RExvUXJ4eWpFZi1lMEJqbkJtNG9pazZrSmtOcV9vVi1qNW40M0Q5dFRGam9BaGc1YjZrNzF4RmlkczJUY2ZQSnByUDNpdEQzcnVMcXRvSGJIeHBQWnAwZm8zOC1SRUhhT0JrVDV1SEw0dS14ZVgwaVVEYnFROVR4R2h6ejk1OWREMVNERkpiZDQ2a090TXQ3LUx1Tm1OeEVyU3l3UU1PMU5DczRUVnFHMUIzVW5RbHJ1TG5naUFIamdxcmdR?oc=5",
    "n_titres": 5
   },
   "Mirra Andreeva": {
-   "p": 0.012,
-   "titre": "Daria Snigur vs Mirra Andreeva · Round 4 · WTA Beijing - Tennis.com",
-   "date": "2026-10-05T17:05:47+00:00",
+   "p": 0.008,
+   "titre": "Mirra Andreeva vs Elina Svitolina · Round Robin · WTA Finals - Tennis.com",
+   "date": "2026-11-09T18:00:56+00:00",
    "source": "Tennis.com",
-   "lien": "https://news.google.com/rss/articles/CBMilgFBVV95cUxOZWVYVEtJdnBMRnRwemRoeENaeXFhYy1nSWZ3OWxyTWhIVVh5T29FbFlKeXBINzRqc1p2MUhocElnNlJZY09KX3djbXgzOS1WLTZONTIyOEozdlZvQ2QzN1BFYTl5cENHTnNHQ0d0QWhmYkIyRlExSnliUDZ6c3h4MFQ3aGt5TjJnQXI0bkpNbl9UeTBOMkE?oc=5",
+   "lien": "https://news.google.com/rss/articles/CBMilAFBVV95cUxOdTJ5TldIT054T2RwdTB6UndRWk80V042WUlkek1zdzdfdG9KQ2VmOGFQRHh4NmVudUhXY052Qjc0N0YyLUIxa3dvelRmMDJVMERVQjI4SmdDSk5nZmZNMURreEVZZllqMkFubVZfcTQ4NHZNaE9SVk13UDAtS1pJNFE3Q3F6ZmhsazlHU0RVNTZGbzg1?oc=5",
    "n_titres": 5
   },
-  "Naomi Osaka": {
-   "p": 0.015,
-   "titre": "[UPDATED R4]. Prediction, H2H of Karolina Muchova’s draw vs Osaka, Bartunkova, Andreeva, Gauff to win the Beijing - Tennis Tonic",
-   "date": "2026-10-05T18:54:44+00:00",
-   "source": "Tennis Tonic",
-   "lien": "https://news.google.com/rss/articles/CBMi5AFBVV95cUxPUEZ1c0pMU29jS0JmY2dmSUNLOEJ6bm9aYXBhSFJqc0NGU1VGVVBVZlhLbUNtdnNsejFMTmphOWVXbDhzZWxYVkdqSWM5b0IzUUstcW5xSVhXZVZZOEp6N0dHb3V2WWU2dlNSYzVkcExZQVdsem5lN0g4UTQ1cG5lUFhXNEdFd0Y0NWpnX3o0MkpMeDlCdkJYWFhTbzdaM1h6QnB2U2Rndm0zRmV0TEx3ZmctTG9uYk1uSWlabmQ1ZENMdEFEYTVZaUFJdnVOclQ2XzJHRlJjcnpIS1hpQW1iWklfamg?oc=5",
-   "n_titres": 5
-  },
-  "Nikola Bartunkova": {
-   "p": 0.021,
-   "titre": "[UPDATED R4]. Prediction, H2H of Naomi Osaka’s draw vs Muchova, Bartunkova, Andreeva, Gauff to win the Beijing - Tennis Tonic",
-   "date": "2026-10-05T18:54:44+00:00",
-   "source": "Tennis Tonic",
-   "lien": "https://news.google.com/rss/articles/CBMi4AFBVV95cUxQaUh1UmxJQWRpRFRJSGRlNlNzZkREcVBRaFFfa0RINURYcUZnc3B1MDVyWTJIdXlfbWZNa0xhbDVJSllUa1hiWUFZSUo1RldadzJwN21ESTRfTXl5dGtwanlsVW53V1NXR3FlUURtVkVHN1RtdHJMUDFKYUp3ckZCdnJ2Mm9leUd1RGVKQnBQSjNkSDFRZG9RbEFBNFo1eWF4bkdKUVdHekt1RTN3ZEQxN01EVU9icDBqM0txQ25hd1l1cGJhTEkwUV9zSkpSTkRDbUpTQ0wwRmRSbU9ZZEFIYQ?oc=5",
-   "n_titres": 5
-  },
-  "Qinwen Zheng": {
-   "p": 0.018,
-   "titre": "Tournament Stats - Tennis Tonic - News, Predictions, H2H, Live Scores, stats - Tennis Tonic",
-   "date": "2026-10-05T10:06:31+00:00",
-   "source": "Tennis Tonic",
-   "lien": "https://news.google.com/rss/articles/CBMimgFBVV95cUxPMGljdmloRjVQWFlZTHh1aUl2VjQ2YVpfZlgzR1pESlNyVGJYcjFGUUZmalBMVEw4aHZRTlI3c3pIOGJuUjBtckF0bFFnT3lrbDluRUxCSUwzQ00zRDh4eWhZYzFlQVBJRE1nd2cza1RJQ285VUtWWjkyMEpMLWExZmdBNmpXU2FxNFU4NWktT1lTYUJuUWpXTzZn?oc=5",
-   "n_titres": 5
-  },
-  "Sinja Kraus": {
-   "p": 0.014,
-   "titre": "[UPDATED R4]. Prediction, H2H of Naomi Osaka’s draw vs Muchova, Bartunkova, Andreeva, Gauff to win the Beijing - Tennis Tonic",
-   "date": "2026-10-05T18:54:44+00:00",
-   "source": "Tennis Tonic",
-   "lien": "https://news.google.com/rss/articles/CBMi4AFBVV95cUxQaUh1UmxJQWRpRFRJSGRlNlNzZkREcVBRaFFfa0RINURYcUZnc3B1MDVyWTJIdXlfbWZNa0xhbDVJSllUa1hiWUFZSUo1RldadzJwN21ESTRfTXl5dGtwanlsVW53V1NXR3FlUURtVkVHN1RtdHJMUDFKYUp3ckZCdnJ2Mm9leUd1RGVKQnBQSjNkSDFRZG9RbEFBNFo1eWF4bkdKUVdHekt1RTN3ZEQxN01EVU9icDBqM0txQ25hd1l1cGJhTEkwUV9zSkpSTkRDbUpTQ0wwRmRSbU9ZZEFIYQ?oc=5",
-   "n_titres": 5
-  },
-  "Xinran Sun": {
+  "Quentin Halys": {
    "p": 0.012,
-   "titre": "Gauff pulls away late to defeat rising Sun in Beijing - WTA Tennis",
-   "date": "2026-10-05T19:28:21+00:00",
-   "source": "WTA Tennis",
-   "lien": "https://news.google.com/rss/articles/CBMilwFBVV95cUxPcEhMbkc3cFlPaDZVN1dhQTZqYUowVW4wcTkySHJsQkZsb20xY2V5NzhMOEgzcEFoS1hubExKSkYta1lZZ2hiZWVpLWdJcWZIbzhnLXl6Q25pUm5yU3FJS3plNWpoZWxjVjBYdE54SWszZjloa0JqelhfU015T0lrYWYxRVZvT3dIMG4zYzNtZ0FsV1d0M0Fr?oc=5",
-   "n_titres": 4
+   "titre": "STOCKHOLM DRAW. Quentin Halys’s prediction with Sonego next. H2H and rankings - Tennis Tonic",
+   "date": "2026-11-09T20:01:44+00:00",
+   "source": "Tennis Tonic",
+   "lien": "https://news.google.com/rss/articles/CBMiuwFBVV95cUxNUEZrZ2hBcUo1VGw1bk96RlR3OE5HcWRqX1VXQlJiQzREaGtIak1zSE5CT00yMzVXOEF1Wm53LUN4Um5WSUZhTU9SY2dDcTlLODlJTl9id3FET1dKcUM2UXctWUxqdDV3LWp3QWdETWM0WWVoZVR3eXFuTF9vTWVIeGl4STBQSEU4UklnQ3gtWWdJNlJJY2tYRjNEeTItSlllNjljeU5aZGhjNFZjdlBTWTRZWlBrMjVVSm9j?oc=5",
+   "n_titres": 5
+  },
+  "Toby Samuel": {
+   "p": 0.01,
+   "titre": "STOCKHOLM DRAW. Leo Borg’s prediction with Samuel next. H2H and rankings - Tennis Tonic",
+   "date": "2026-11-09T00:00:24+00:00",
+   "source": "Tennis Tonic",
+   "lien": "https://news.google.com/rss/articles/CBMitAFBVV95cUxNSk8yZFQ4bHJvM3l0VnMyYnhBYVl1cU5xckJSb3IxajFyTTFMT2JUWFMtNzRvTDA4SFpjaW82STlkeWFENU83QVVWVDFVazRaTGtLd3ZrNmR1Y2NfcDNzc0xtN0VHLWJGMmJLYVEwT1pwTmhBVlI5TEFVaFBIelJTRldDQUZLU0o4QnZKRmNKX2pEQmt5UldGZE9nazFrVTBoa1ZwdWRRRjhScHpZa2wzTmVXRXE?oc=5",
+   "n_titres": 5
+  },
+  "Zizou Bergs": {
+   "p": 0.018,
+   "titre": "STOCKHOLM DRAW. Miomir Kecmanovic’s prediction with Rinderknech next. H2H and rankings - Tennis Tonic",
+   "date": "2026-11-09T19:40:41+00:00",
+   "source": "Tennis Tonic",
+   "lien": "https://news.google.com/rss/articles/CBMixwFBVV95cUxON3hvYkdTZ0otdGtic29tRHhja3dIc3ZYS0lDalZNNTdMcGpUdEhQZ1oyZWJQVnBQM1FkVERvclJDSE1sdjhQN256TGFIYkF2U25jRWVJUUp0WU1Yb3kzTE5nZnRiTHM2YnZqdjZsT05RLXcxeDhhcVh4V0RoU2hFNndMbUFadlVfRVkyOGp6ay1pMzVEdG00Wnd4bUJQRHgwb21EdFUtQ1EyME13NlYzaHVEVVJxOThFOXpLQ2tUYWRfX2FaLVZ3?oc=5",
+   "n_titres": 5
   }
  }
 }
