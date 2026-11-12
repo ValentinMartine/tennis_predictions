@@ -1,5 +1,5 @@
 {
-  "checked_at": "2026-11-11T14:10:33+00:00",
+  "checked_at": "2026-11-12T15:04:41+00:00",
   "tour": "wta",
   "primary_source": "tennis-data.co.uk",
   "fresh_csv_fallback": "Valuebetennis",
@@ -198,8 +198,8 @@
       "source": "valuebetennis",
       "ok": true,
       "url": "https://www.valuebetennis.com/datasets/valuebetennis-matchs-2026.csv",
-      "latest_match_date": "2026-11-10",
-      "rows": 2322,
+      "latest_match_date": "2026-11-11",
+      "rows": 2324,
       "primary_error": "HTTP Error 403: Forbidden",
       "error": null
     }
@@ -207,5 +207,5 @@
   "healthy": true,
   "current_year_source": "valuebetennis",
   "current_year_url": "https://www.valuebetennis.com/datasets/valuebetennis-matchs-2026.csv",
-  "current_year_latest_match_date": "2026-11-10"
+  "current_year_latest_match_date": "2026-11-11"
 }
